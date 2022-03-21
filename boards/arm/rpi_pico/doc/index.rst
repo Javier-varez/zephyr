@@ -28,7 +28,6 @@ Hardware
 - 8 Programmable I/O (PIO) for custom peripherals
 - On-board LED
 
-
 .. figure:: img/rpi_pico.png
      :width: 150px
      :align: center
@@ -58,8 +57,8 @@ hardware features:
      - :kconfig:`CONFIG_GPIO`
      - :dtcompatible:`rpi,pico-gpio`
    * - I2C
-     - :kconfig:`CONFIG_I2C`
-     - :dtcompatible:`rpi,pico-i2c`
+     - :kconfig:option:`CONFIG_I2C`
+     - :dtcompatible:`snps,designware-i2c`
    * - HWINFO
      - :kconfig:option:`CONFIG_HWINFO`
      - N/A
