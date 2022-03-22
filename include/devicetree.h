@@ -422,10 +422,8 @@
  * @param compat lowercase-and-underscores compatible, without quotes
  * @return node identifier for a node with that compatible, or DT_INVALID_NODE
  */
-#define DT_COMPAT_GET_ANY_STATUS_OKAY(compat)			\
-	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat),	\
-		    (DT_INST(0, compat)),		\
-		    (DT_INVALID_NODE))
+#define DT_COMPAT_GET_ANY_STATUS_OKAY(compat)                                                      \
+	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat), (DT_INST(0, compat)), (DT_INVALID_NODE))
 
 /**
  * @brief Get a devicetree node's full path as a string literal
@@ -489,8 +487,7 @@
  * @return an expression that evaluates to 1 if the node identifiers
  *         refer to the same node, and evaluates to 0 otherwise
  */
-#define DT_SAME_NODE(node_id1, node_id2) \
-	(DT_DEP_ORD(node_id1) == (DT_DEP_ORD(node_id2)))
+#define DT_SAME_NODE(node_id1, node_id2) (DT_DEP_ORD(node_id1) == (DT_DEP_ORD(node_id2)))
 
 /* Implementation note: distinct nodes have distinct node identifiers.
  * See include/devicetree/ordinals.h. */
@@ -581,9 +578,8 @@
  * @param default_value a fallback value to expand to
  * @return the property's length or the given default value
  */
-#define DT_PROP_LEN_OR(node_id, prop, default_value) \
-	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), \
-		    (DT_PROP_LEN(node_id, prop)), (default_value))
+#define DT_PROP_LEN_OR(node_id, prop, default_value)                                               \
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), (DT_PROP_LEN(node_id, prop)), (default_value))
 
 /**
  * @brief Is index "idx" valid for an array type property?
@@ -605,7 +601,7 @@
  * @return An expression which evaluates to 1 if "idx" is a valid index
  *         into the given property, and 0 otherwise.
  */
-#define DT_PROP_HAS_IDX(node_id, prop, idx) \
+#define DT_PROP_HAS_IDX(node_id, prop, idx)                                                        \
 	IS_ENABLED(DT_CAT6(node_id, _P_, prop, _IDX_, idx, _EXISTS))
 
 /**
@@ -645,9 +641,8 @@
  * @param default_value a fallback value to expand to
  * @return the property's value or default_value
  */
-#define DT_PROP_OR(node_id, prop, default_value) \
-	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), \
-		    (DT_PROP(node_id, prop)), (default_value))
+#define DT_PROP_OR(node_id, prop, default_value)                                                   \
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), (DT_PROP(node_id, prop)), (default_value))
 
 /**
  * @brief Equivalent to DT_PROP(node_id, label)
@@ -709,9 +704,9 @@
  * @return zero-based index of the property's value in its enum if present,
  *         default_idx_value ohterwise
  */
-#define DT_ENUM_IDX_OR(node_id, prop, default_idx_value) \
-	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), \
-		    (DT_ENUM_IDX(node_id, prop)), (default_idx_value))
+#define DT_ENUM_IDX_OR(node_id, prop, default_idx_value)                                           \
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), (DT_ENUM_IDX(node_id, prop)),                 \
+		    (default_idx_value))
 
 /**
  * @brief Get a string property's value as a token.
@@ -765,8 +760,7 @@
  * @return the value of @p prop as a token, i.e. without any quotes
  *         and with special characters converted to underscores
  */
-#define DT_STRING_TOKEN(node_id, prop) \
-	DT_CAT4(node_id, _P_, prop, _STRING_TOKEN)
+#define DT_STRING_TOKEN(node_id, prop) DT_CAT4(node_id, _P_, prop, _STRING_TOKEN)
 
 /**
  * @brief Like DT_STRING_TOKEN(), but uppercased.
@@ -817,8 +811,7 @@
  * @return the value of @p prop as a token, i.e. without any quotes
  *         and with special characters converted to underscores
  */
-#define DT_STRING_UPPER_TOKEN(node_id, prop) \
-	DT_CAT4(node_id, _P_, prop, _STRING_UPPER_TOKEN)
+#define DT_STRING_UPPER_TOKEN(node_id, prop) DT_CAT4(node_id, _P_, prop, _STRING_UPPER_TOKEN)
 
 /*
  * phandle properties
@@ -867,7 +860,7 @@
  * @param prop lowercase-and-underscores property of the phandle's node
  * @return the property's value
  */
-#define DT_PROP_BY_PHANDLE_IDX(node_id, phs, idx, prop) \
+#define DT_PROP_BY_PHANDLE_IDX(node_id, phs, idx, prop)                                            \
 	DT_PROP(DT_PHANDLE_BY_IDX(node_id, phs, idx), prop)
 
 /**
@@ -889,7 +882,7 @@
  * @param default_value a fallback value to expand to
  * @return the property's value
  */
-#define DT_PROP_BY_PHANDLE_IDX_OR(node_id, phs, idx, prop, default_value) \
+#define DT_PROP_BY_PHANDLE_IDX_OR(node_id, phs, idx, prop, default_value)                          \
 	DT_PROP_OR(DT_PHANDLE_BY_IDX(node_id, phs, idx), prop, default_value)
 
 /**
@@ -903,8 +896,7 @@
  * @param prop lowercase-and-underscores property of the phandle's node
  * @return the property's value
  */
-#define DT_PROP_BY_PHANDLE(node_id, ph, prop) \
-	DT_PROP_BY_PHANDLE_IDX(node_id, ph, 0, prop)
+#define DT_PROP_BY_PHANDLE(node_id, ph, prop) DT_PROP_BY_PHANDLE_IDX(node_id, ph, 0, prop)
 
 /**
  * @brief Get a phandle-array specifier cell value at an index
@@ -954,8 +946,7 @@
  *             at "pha" index "idx"
  * @return the cell's value
  */
-#define DT_PHA_BY_IDX(node_id, pha, idx, cell) \
-	DT_PROP(node_id, pha##_IDX_##idx##_VAL_##cell)
+#define DT_PHA_BY_IDX(node_id, pha, idx, cell) DT_PROP(node_id, pha##_IDX_##idx##_VAL_##cell)
 
 /**
  * @brief Like DT_PHA_BY_IDX(), but with a fallback to default_value.
@@ -974,7 +965,7 @@
  * @param default_value a fallback value to expand to
  * @return the cell's value or "default_value"
  */
-#define DT_PHA_BY_IDX_OR(node_id, pha, idx, cell, default_value) \
+#define DT_PHA_BY_IDX_OR(node_id, pha, idx, cell, default_value)                                   \
 	DT_PROP_OR(node_id, pha##_IDX_##idx##_VAL_##cell, default_value)
 /* Implementation note: the _IDX_##idx##_VAL_##cell##_EXISTS
  * macros are defined, so it's safe to use DT_PROP_OR() here, because
@@ -1004,7 +995,7 @@
  * @param default_value a fallback value to expand to
  * @return the cell's value or default_value
  */
-#define DT_PHA_OR(node_id, pha, cell, default_value) \
+#define DT_PHA_OR(node_id, pha, cell, default_value)                                               \
 	DT_PHA_BY_IDX_OR(node_id, pha, 0, cell, default_value)
 
 /**
@@ -1041,8 +1032,7 @@
  * @param cell lowercase-and-underscores cell name in the named specifier
  * @return the cell's value
  */
-#define DT_PHA_BY_NAME(node_id, pha, name, cell) \
-	DT_PROP(node_id, pha##_NAME_##name##_VAL_##cell)
+#define DT_PHA_BY_NAME(node_id, pha, name, cell) DT_PROP(node_id, pha##_NAME_##name##_VAL_##cell)
 
 /**
  * @brief Like DT_PHA_BY_NAME(), but with a fallback to default_value
@@ -1059,7 +1049,7 @@
  * @param default_value a fallback value to expand to
  * @return the cell's value or default_value
  */
-#define DT_PHA_BY_NAME_OR(node_id, pha, name, cell, default_value) \
+#define DT_PHA_BY_NAME_OR(node_id, pha, name, cell, default_value)                                 \
 	DT_PROP_OR(node_id, pha##_NAME_##name##_VAL_##cell, default_value)
 /* Implementation note: the _NAME_##name##_VAL_##cell##_EXISTS
  * macros are defined, so it's safe to use DT_PROP_OR() here, because
@@ -1109,8 +1099,7 @@
  * @param name lowercase-and-underscores name of an element in "pha"
  * @return a node identifier for the node with that phandle
  */
-#define DT_PHANDLE_BY_NAME(node_id, pha, name) \
-	DT_PROP(node_id, pha##_NAME_##name##_PH)
+#define DT_PHANDLE_BY_NAME(node_id, pha, name) DT_PROP(node_id, pha##_NAME_##name##_PH)
 
 /**
  * @brief Get a node identifier for a phandle in a property.
@@ -1151,8 +1140,7 @@
  * @param idx index into "prop"
  * @return node identifier for the node with the phandle at that index
  */
-#define DT_PHANDLE_BY_IDX(node_id, prop, idx) \
-	DT_CAT6(node_id, _P_, prop, _IDX_, idx, _PH)
+#define DT_PHANDLE_BY_IDX(node_id, prop, idx) DT_CAT6(node_id, _P_, prop, _IDX_, idx, _PH)
 /*
  * Implementation note: using DT_CAT6 above defers concatenation until
  * after expansion of each parameter. This is important when 'idx' is
@@ -1265,8 +1253,7 @@
  * @return 1 if "idx" is a valid register block index,
  *         0 otherwise.
  */
-#define DT_RANGES_HAS_IDX(node_id, idx) \
-	IS_ENABLED(DT_CAT4(node_id, _RANGES_IDX_, idx, _EXISTS))
+#define DT_RANGES_HAS_IDX(node_id, idx) IS_ENABLED(DT_CAT4(node_id, _RANGES_IDX_, idx, _EXISTS))
 
 /**
  * @brief Does a ranges property have child bus flags at index?
@@ -1316,7 +1303,7 @@
  * @return 1 if "idx" is a valid child bus flags index,
  *         0 otherwise.
  */
-#define DT_RANGES_HAS_CHILD_BUS_FLAGS_AT_IDX(node_id, idx) \
+#define DT_RANGES_HAS_CHILD_BUS_FLAGS_AT_IDX(node_id, idx)                                         \
 	IS_ENABLED(DT_CAT4(node_id, _RANGES_IDX_, idx, _VAL_CHILD_BUS_FLAGS_EXISTS))
 
 /**
@@ -1352,7 +1339,7 @@
  * @param idx logical index into the ranges array
  * @returns range child bus flags field at idx
  */
-#define DT_RANGES_CHILD_BUS_FLAGS_BY_IDX(node_id, idx) \
+#define DT_RANGES_CHILD_BUS_FLAGS_BY_IDX(node_id, idx)                                             \
 	DT_CAT4(node_id, _RANGES_IDX_, idx, _VAL_CHILD_BUS_FLAGS)
 
 /**
@@ -1397,7 +1384,7 @@
  * @param idx logical index into the ranges array
  * @returns range child bus address field at idx
  */
-#define DT_RANGES_CHILD_BUS_ADDRESS_BY_IDX(node_id, idx) \
+#define DT_RANGES_CHILD_BUS_ADDRESS_BY_IDX(node_id, idx)                                           \
 	DT_CAT4(node_id, _RANGES_IDX_, idx, _VAL_CHILD_BUS_ADDRESS)
 
 /**
@@ -1442,7 +1429,7 @@
  * @param idx logical index into the ranges array
  * @returns range parent bus address field at idx
  */
-#define DT_RANGES_PARENT_BUS_ADDRESS_BY_IDX(node_id, idx) \
+#define DT_RANGES_PARENT_BUS_ADDRESS_BY_IDX(node_id, idx)                                          \
 	DT_CAT4(node_id, _RANGES_IDX_, idx, _VAL_PARENT_BUS_ADDRESS)
 
 /**
@@ -1487,8 +1474,7 @@
  * @param idx logical index into the ranges array
  * @returns range length field at idx
  */
-#define DT_RANGES_LENGTH_BY_IDX(node_id, idx) \
-	DT_CAT4(node_id, _RANGES_IDX_, idx, _VAL_LENGTH)
+#define DT_RANGES_LENGTH_BY_IDX(node_id, idx) DT_CAT4(node_id, _RANGES_IDX_, idx, _VAL_LENGTH)
 
 /**
  * @brief Invokes "fn" for each entry of "node_id" ranges property
@@ -1523,8 +1509,7 @@
  * @param node_id node identifier
  * @param fn macro to invoke
  */
-#define DT_FOREACH_RANGE(node_id, fn) \
-	DT_CAT(node_id, _FOREACH_RANGE)(fn)
+#define DT_FOREACH_RANGE(node_id, fn) DT_CAT(node_id, _FOREACH_RANGE)(fn)
 
 /**
  * @}
@@ -1556,8 +1541,7 @@
  * @return 1 if "idx" is a valid register block index,
  *         0 otherwise.
  */
-#define DT_REG_HAS_IDX(node_id, idx) \
-	IS_ENABLED(DT_CAT(node_id, _REG_IDX_##idx##_EXISTS))
+#define DT_REG_HAS_IDX(node_id, idx) IS_ENABLED(DT_CAT(node_id, _REG_IDX_##idx##_EXISTS))
 
 /**
  * @brief Get the base address of the register block at index "idx"
@@ -1565,8 +1549,7 @@
  * @param idx index of the register whose address to return
  * @return address of the idx-th register block
  */
-#define DT_REG_ADDR_BY_IDX(node_id, idx) \
-	DT_CAT(node_id, _REG_IDX_##idx##_VAL_ADDRESS)
+#define DT_REG_ADDR_BY_IDX(node_id, idx) DT_CAT(node_id, _REG_IDX_##idx##_VAL_ADDRESS)
 
 /**
  * @brief Get the size of the register block at index "idx"
@@ -1579,8 +1562,7 @@
  * @param idx index of the register whose size to return
  * @return size of the idx-th register block
  */
-#define DT_REG_SIZE_BY_IDX(node_id, idx) \
-	DT_CAT(node_id, _REG_IDX_##idx##_VAL_SIZE)
+#define DT_REG_SIZE_BY_IDX(node_id, idx) DT_CAT(node_id, _REG_IDX_##idx##_VAL_SIZE)
 
 /**
  * @brief Get a node's (only) register block address
@@ -1606,8 +1588,7 @@
  * @param name lowercase-and-underscores register specifier name
  * @return address of the register block specified by name
  */
-#define DT_REG_ADDR_BY_NAME(node_id, name) \
-	DT_CAT(node_id, _REG_NAME_##name##_VAL_ADDRESS)
+#define DT_REG_ADDR_BY_NAME(node_id, name) DT_CAT(node_id, _REG_NAME_##name##_VAL_ADDRESS)
 
 /**
  * @brief Get a register block's size by name
@@ -1615,8 +1596,7 @@
  * @param name lowercase-and-underscores register specifier name
  * @return size of the register block specified by name
  */
-#define DT_REG_SIZE_BY_NAME(node_id, name) \
-	DT_CAT(node_id, _REG_NAME_##name##_VAL_SIZE)
+#define DT_REG_SIZE_BY_NAME(node_id, name) DT_CAT(node_id, _REG_NAME_##name##_VAL_SIZE)
 
 /**
  * @}
@@ -1648,8 +1628,7 @@
  * @return 1 if the idx is valid for the interrupt property
  *         0 otherwise.
  */
-#define DT_IRQ_HAS_IDX(node_id, idx) \
-	IS_ENABLED(DT_CAT(node_id, _IRQ_IDX_##idx##_EXISTS))
+#define DT_IRQ_HAS_IDX(node_id, idx) IS_ENABLED(DT_CAT(node_id, _IRQ_IDX_##idx##_EXISTS))
 
 /**
  * @brief Does an interrupts property have a named cell specifier at an index?
@@ -1661,7 +1640,7 @@
  * @return 1 if the named cell exists in the interrupt specifier at index idx
  *         0 otherwise.
  */
-#define DT_IRQ_HAS_CELL_AT_IDX(node_id, idx, cell) \
+#define DT_IRQ_HAS_CELL_AT_IDX(node_id, idx, cell)                                                 \
 	IS_ENABLED(DT_CAT(node_id, _IRQ_IDX_##idx##_VAL_##cell##_EXISTS))
 
 /**
@@ -1682,7 +1661,7 @@
  * @return 1 if "name" is a valid named specifier
  *         0 otherwise.
  */
-#define DT_IRQ_HAS_NAME(node_id, name) \
+#define DT_IRQ_HAS_NAME(node_id, name)                                                             \
 	IS_ENABLED(DT_CAT(node_id, _IRQ_NAME_##name##_VAL_irq_EXISTS))
 
 /**
@@ -1718,8 +1697,7 @@
  * @param cell cell name specifier
  * @return the named value at the specifier given by the index
  */
-#define DT_IRQ_BY_IDX(node_id, idx, cell)   \
-	DT_CAT(node_id, _IRQ_IDX_##idx##_VAL_##cell)
+#define DT_IRQ_BY_IDX(node_id, idx, cell) DT_CAT(node_id, _IRQ_IDX_##idx##_VAL_##cell)
 
 /**
  * @brief Get a value within an interrupt specifier by name
@@ -1736,8 +1714,7 @@
  * @param cell cell name specifier
  * @return the named value at the specifier given by the index
  */
-#define DT_IRQ_BY_NAME(node_id, name, cell) \
-	DT_CAT(node_id, _IRQ_NAME_##name##_VAL_##cell)
+#define DT_IRQ_BY_NAME(node_id, name, cell) DT_CAT(node_id, _IRQ_NAME_##name##_VAL_##cell)
 
 /**
  * @brief Get an interrupt specifier's value
@@ -1832,8 +1809,7 @@
  * @param node_id node identifier
  * @param fn macro to invoke
  */
-#define DT_FOREACH_CHILD(node_id, fn) \
-	DT_CAT(node_id, _FOREACH_CHILD)(fn)
+#define DT_FOREACH_CHILD(node_id, fn) DT_CAT(node_id, _FOREACH_CHILD)(fn)
 
 /**
  * @brief Invokes "fn" for each child of "node_id" with multiple arguments
@@ -1847,7 +1823,7 @@
  *
  * @see DT_FOREACH_CHILD
  */
-#define DT_FOREACH_CHILD_VARGS(node_id, fn, ...) \
+#define DT_FOREACH_CHILD_VARGS(node_id, fn, ...)                                                   \
 	DT_CAT(node_id, _FOREACH_CHILD_VARGS)(fn, __VA_ARGS__)
 
 /**
@@ -1862,8 +1838,7 @@
  * @param node_id node identifier
  * @param fn macro to invoke
  */
-#define DT_FOREACH_CHILD_STATUS_OKAY(node_id, fn) \
-	DT_CAT(node_id, _FOREACH_CHILD_STATUS_OKAY)(fn)
+#define DT_FOREACH_CHILD_STATUS_OKAY(node_id, fn) DT_CAT(node_id, _FOREACH_CHILD_STATUS_OKAY)(fn)
 
 /**
  * @brief Call "fn" on the child nodes with status "okay" with multiple
@@ -1881,7 +1856,7 @@
  *
  * @see DT_FOREACH_CHILD_STATUS_OKAY
  */
-#define DT_FOREACH_CHILD_STATUS_OKAY_VARGS(node_id, fn, ...) \
+#define DT_FOREACH_CHILD_STATUS_OKAY_VARGS(node_id, fn, ...)                                       \
 	DT_CAT(node_id, _FOREACH_CHILD_STATUS_OKAY_VARGS)(fn, __VA_ARGS__)
 
 /**
@@ -1928,8 +1903,7 @@
  * @param prop lowercase-and-underscores property name
  * @param fn macro to invoke
  */
-#define DT_FOREACH_PROP_ELEM(node_id, prop, fn)		\
-	DT_CAT4(node_id, _P_, prop, _FOREACH_PROP_ELEM)(fn)
+#define DT_FOREACH_PROP_ELEM(node_id, prop, fn) DT_CAT4(node_id, _P_, prop, _FOREACH_PROP_ELEM)(fn)
 
 /**
  * @brief Invokes "fn" for each element in the value of property "prop" with
@@ -1948,7 +1922,7 @@
  *
  * @see DT_FOREACH_PROP_ELEM
  */
-#define DT_FOREACH_PROP_ELEM_VARGS(node_id, prop, fn, ...)		\
+#define DT_FOREACH_PROP_ELEM_VARGS(node_id, prop, fn, ...)                                         \
 	DT_CAT4(node_id, _P_, prop, _FOREACH_PROP_ELEM_VARGS)(fn, __VA_ARGS__)
 
 /**
@@ -2000,10 +1974,8 @@
  * @param fn Macro to call for each enabled node. Must accept a
  *           node_id as its only parameter.
  */
-#define DT_FOREACH_STATUS_OKAY(compat, fn)				\
-	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat),			\
-		    (UTIL_CAT(DT_FOREACH_OKAY_, compat)(fn)),	\
-		    ())
+#define DT_FOREACH_STATUS_OKAY(compat, fn)                                                         \
+	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat), (UTIL_CAT(DT_FOREACH_OKAY_, compat)(fn)), ())
 
 /**
  * @brief Invokes "fn" for each status "okay" node of a compatible
@@ -2043,11 +2015,9 @@
  *           node_id as its only parameter.
  * @param ... Additional arguments to pass to "fn"
  */
-#define DT_FOREACH_STATUS_OKAY_VARGS(compat, fn, ...)			\
-	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat),			\
-		    (UTIL_CAT(DT_FOREACH_OKAY_VARGS_,			\
-			      compat)(fn, __VA_ARGS__)),		\
-		    ())
+#define DT_FOREACH_STATUS_OKAY_VARGS(compat, fn, ...)                                              \
+	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat),                                             \
+		    (UTIL_CAT(DT_FOREACH_OKAY_VARGS_, compat)(fn, __VA_ARGS__)), ())
 
 /**
  * @}
@@ -2094,8 +2064,7 @@
  * @param status a status as one of the tokens okay or disabled, not a string
  * @return 1 if the node has the given status, 0 otherwise.
  */
-#define DT_NODE_HAS_STATUS(node_id, status) \
-	DT_NODE_HAS_STATUS_INTERNAL(node_id, status)
+#define DT_NODE_HAS_STATUS(node_id, status) DT_NODE_HAS_STATUS_INTERNAL(node_id, status)
 
 /**
  * @brief Does the devicetree have a status "okay" node with a compatible?
@@ -2114,8 +2083,7 @@
  * @param compat lowercase-and-underscores compatible, without quotes
  * @return 1 if both of the above conditions are met, 0 otherwise
  */
-#define DT_HAS_COMPAT_STATUS_OKAY(compat) \
-	IS_ENABLED(DT_CAT(DT_COMPAT_HAS_OKAY_, compat))
+#define DT_HAS_COMPAT_STATUS_OKAY(compat) IS_ENABLED(DT_CAT(DT_COMPAT_HAS_OKAY_, compat))
 
 /**
  * @brief Get the number of instances of a given compatible with
@@ -2123,9 +2091,8 @@
  * @param compat lowercase-and-underscores compatible, without quotes
  * @return Number of instances with status "okay"
  */
-#define DT_NUM_INST_STATUS_OKAY(compat)			\
-	UTIL_AND(DT_HAS_COMPAT_STATUS_OKAY(compat),		\
-		 UTIL_CAT(DT_N_INST, DT_DASH(compat, NUM_OKAY)))
+#define DT_NUM_INST_STATUS_OKAY(compat)                                                            \
+	UTIL_AND(DT_HAS_COMPAT_STATUS_OKAY(compat), UTIL_CAT(DT_N_INST, DT_DASH(compat, NUM_OKAY)))
 
 /**
  * @brief Does a devicetree node match a compatible?
@@ -2150,8 +2117,7 @@
  * @return 1 if the node's compatible property contains compat,
  *         0 otherwise.
  */
-#define DT_NODE_HAS_COMPAT(node_id, compat) \
-	IS_ENABLED(DT_CAT(node_id, _COMPAT_MATCHES_##compat))
+#define DT_NODE_HAS_COMPAT(node_id, compat) IS_ENABLED(DT_CAT(node_id, _COMPAT_MATCHES_##compat))
 
 /**
  * @brief Does a devicetree node have a compatible and status?
@@ -2165,7 +2131,7 @@
  * @param compat lowercase-and-underscores compatible, without quotes
  * @param status okay or disabled as a token, not a string
  */
-#define DT_NODE_HAS_COMPAT_STATUS(node_id, compat, status) \
+#define DT_NODE_HAS_COMPAT_STATUS(node_id, compat, status)                                         \
 	DT_NODE_HAS_COMPAT(node_id, compat) && DT_NODE_HAS_STATUS(node_id, status)
 
 /**
@@ -2181,9 +2147,7 @@
  * @param prop lowercase-and-underscores property name
  * @return 1 if the node has the property, 0 otherwise.
  */
-#define DT_NODE_HAS_PROP(node_id, prop) \
-	IS_ENABLED(DT_CAT(node_id, _P_##prop##_EXISTS))
-
+#define DT_NODE_HAS_PROP(node_id, prop) IS_ENABLED(DT_CAT(node_id, _P_##prop##_EXISTS))
 
 /**
  * @brief Does a phandle array have a named cell specifier at an index?
@@ -2201,9 +2165,8 @@
  * @return 1 if the named cell exists in the specifier at index idx,
  *         0 otherwise.
  */
-#define DT_PHA_HAS_CELL_AT_IDX(node_id, pha, idx, cell)             \
-	IS_ENABLED(DT_PROP(node_id,                                 \
-			   pha##_IDX_##idx##_VAL_##cell##_EXISTS))
+#define DT_PHA_HAS_CELL_AT_IDX(node_id, pha, idx, cell)                                            \
+	IS_ENABLED(DT_PROP(node_id, pha##_IDX_##idx##_VAL_##cell##_EXISTS))
 
 /**
  * @brief Equivalent to DT_PHA_HAS_CELL_AT_IDX(node_id, pha, 0, cell)
@@ -2214,8 +2177,7 @@
  * @return 1 if the named cell exists in the specifier at index 0,
  *         0 otherwise.
  */
-#define DT_PHA_HAS_CELL(node_id, pha, cell) \
-	DT_PHA_HAS_CELL_AT_IDX(node_id, pha, 0, cell)
+#define DT_PHA_HAS_CELL(node_id, pha, cell) DT_PHA_HAS_CELL_AT_IDX(node_id, pha, 0, cell)
 
 /**
  * @}
@@ -2319,8 +2281,7 @@
  *
  * @see DT_FOREACH_CHILD
  */
-#define DT_INST_FOREACH_CHILD(inst, fn) \
-	DT_FOREACH_CHILD(DT_DRV_INST(inst), fn)
+#define DT_INST_FOREACH_CHILD(inst, fn) DT_FOREACH_CHILD(DT_DRV_INST(inst), fn)
 
 /**
  * @brief Call "fn" on all child nodes of DT_DRV_INST(inst).
@@ -2334,7 +2295,7 @@
  *
  * @see DT_FOREACH_CHILD
  */
-#define DT_INST_FOREACH_CHILD_VARGS(inst, fn, ...) \
+#define DT_INST_FOREACH_CHILD_VARGS(inst, fn, ...)                                                 \
 	DT_FOREACH_CHILD_VARGS(DT_DRV_INST(inst), fn, __VA_ARGS__)
 
 /**
@@ -2343,8 +2304,7 @@
  * @param prop lowercase-and-underscores property name
  * @return zero-based index of the property's value in its enum: list
  */
-#define DT_INST_ENUM_IDX(inst, prop) \
-	DT_ENUM_IDX(DT_DRV_INST(inst), prop)
+#define DT_INST_ENUM_IDX(inst, prop) DT_ENUM_IDX(DT_DRV_INST(inst), prop)
 
 /**
  * @brief Like DT_INST_ENUM_IDX(), but with a fallback to a default enum index
@@ -2354,7 +2314,7 @@
  * @return zero-based index of the property's value in its enum if present,
  *         default_idx_value ohterwise
  */
-#define DT_INST_ENUM_IDX_OR(inst, prop, default_idx_value) \
+#define DT_INST_ENUM_IDX_OR(inst, prop, default_idx_value)                                         \
 	DT_ENUM_IDX_OR(DT_DRV_INST(inst), prop, default_idx_value)
 
 /**
@@ -2382,8 +2342,7 @@
  * @return 1 if "idx" is a valid index into the given property,
  *         0 otherwise.
  */
-#define DT_INST_PROP_HAS_IDX(inst, prop, idx) \
-	DT_PROP_HAS_IDX(DT_DRV_INST(inst), prop, idx)
+#define DT_INST_PROP_HAS_IDX(inst, prop, idx) DT_PROP_HAS_IDX(DT_DRV_INST(inst), prop, idx)
 
 /**
  * @brief Get a DT_DRV_COMPAT element value in an array property
@@ -2392,8 +2351,7 @@
  * @param idx the index to get
  * @return a representation of the idx-th element of the property
  */
-#define DT_INST_PROP_BY_IDX(inst, prop, idx) \
-	DT_PROP_BY_IDX(DT_DRV_INST(inst), prop, idx)
+#define DT_INST_PROP_BY_IDX(inst, prop, idx) DT_PROP_BY_IDX(DT_DRV_INST(inst), prop, idx)
 
 /**
  * @brief Like DT_INST_PROP(), but with a fallback to default_value
@@ -2402,7 +2360,7 @@
  * @param default_value a fallback value to expand to
  * @return DT_INST_PROP(inst, prop) or default_value
  */
-#define DT_INST_PROP_OR(inst, prop, default_value) \
+#define DT_INST_PROP_OR(inst, prop, default_value)                                                 \
 	DT_PROP_OR(DT_DRV_INST(inst), prop, default_value)
 
 /**
@@ -2420,8 +2378,7 @@
  * @param prop lowercase-and-underscores property of the phandle's node
  * @return the value of "prop" as described in the DT_PROP() documentation
  */
-#define DT_INST_PROP_BY_PHANDLE(inst, ph, prop) \
-	DT_INST_PROP_BY_PHANDLE_IDX(inst, ph, 0, prop)
+#define DT_INST_PROP_BY_PHANDLE(inst, ph, prop) DT_INST_PROP_BY_PHANDLE_IDX(inst, ph, 0, prop)
 
 /**
  * @brief Get a DT_DRV_COMPAT instance's property value from a phandle in a
@@ -2434,7 +2391,7 @@
  * @param prop lowercase-and-underscores property of the phandle's node
  * @return the value of "prop" as described in the DT_PROP() documentation
  */
-#define DT_INST_PROP_BY_PHANDLE_IDX(inst, phs, idx, prop) \
+#define DT_INST_PROP_BY_PHANDLE_IDX(inst, phs, idx, prop)                                          \
 	DT_PROP_BY_PHANDLE_IDX(DT_DRV_INST(inst), phs, idx, prop)
 
 /**
@@ -2445,8 +2402,7 @@
  * @param cell binding's cell name within the specifier at index "idx"
  * @return the value of the cell inside the specifier at index "idx"
  */
-#define DT_INST_PHA_BY_IDX(inst, pha, idx, cell) \
-	DT_PHA_BY_IDX(DT_DRV_INST(inst), pha, idx, cell)
+#define DT_INST_PHA_BY_IDX(inst, pha, idx, cell) DT_PHA_BY_IDX(DT_DRV_INST(inst), pha, idx, cell)
 
 /**
  * @brief Like DT_INST_PHA_BY_IDX(), but with a fallback to default_value
@@ -2457,7 +2413,7 @@
  * @param default_value a fallback value to expand to
  * @return DT_INST_PHA_BY_IDX(inst, pha, idx, cell) or default_value
  */
-#define DT_INST_PHA_BY_IDX_OR(inst, pha, idx, cell, default_value) \
+#define DT_INST_PHA_BY_IDX_OR(inst, pha, idx, cell, default_value)                                 \
 	DT_PHA_BY_IDX_OR(DT_DRV_INST(inst), pha, idx, cell, default_value)
 
 /**
@@ -2478,7 +2434,7 @@
  * @param default_value a fallback value to expand to
  * @return DT_INST_PHA(inst, pha, cell) or default_value
  */
-#define DT_INST_PHA_OR(inst, pha, cell, default_value) \
+#define DT_INST_PHA_OR(inst, pha, cell, default_value)                                             \
 	DT_INST_PHA_BY_IDX_OR(inst, pha, 0, cell, default_value)
 
 /**
@@ -2490,7 +2446,7 @@
  * @param cell binding's cell name for the named specifier
  * @return the cell value
  */
-#define DT_INST_PHA_BY_NAME(inst, pha, name, cell) \
+#define DT_INST_PHA_BY_NAME(inst, pha, name, cell)                                                 \
 	DT_PHA_BY_NAME(DT_DRV_INST(inst), pha, name, cell)
 
 /**
@@ -2502,7 +2458,7 @@
  * @param default_value a fallback value to expand to
  * @return DT_INST_PHA_BY_NAME(inst, pha, name, cell) or default_value
  */
-#define DT_INST_PHA_BY_NAME_OR(inst, pha, name, cell, default_value) \
+#define DT_INST_PHA_BY_NAME_OR(inst, pha, name, cell, default_value)                               \
 	DT_PHA_BY_NAME_OR(DT_DRV_INST(inst), pha, name, cell, default_value)
 
 /**
@@ -2513,8 +2469,7 @@
  * @param name lowercase-and-underscores name of an element in "pha"
  * @return node identifier for the phandle at the element named "name"
  */
-#define DT_INST_PHANDLE_BY_NAME(inst, pha, name) \
-	DT_PHANDLE_BY_NAME(DT_DRV_INST(inst), pha, name) \
+#define DT_INST_PHANDLE_BY_NAME(inst, pha, name) DT_PHANDLE_BY_NAME(DT_DRV_INST(inst), pha, name)
 
 /**
  * @brief Get a DT_DRV_COMPAT instance's node identifier for a phandle in
@@ -2525,8 +2480,7 @@
  * @param idx index into "prop"
  * @return a node identifier for the phandle at index "idx" in "prop"
  */
-#define DT_INST_PHANDLE_BY_IDX(inst, prop, idx) \
-	DT_PHANDLE_BY_IDX(DT_DRV_INST(inst), prop, idx)
+#define DT_INST_PHANDLE_BY_IDX(inst, prop, idx) DT_PHANDLE_BY_IDX(DT_DRV_INST(inst), prop, idx)
 
 /**
  * @brief Get a DT_DRV_COMPAT instance's node identifier for a phandle
@@ -2561,8 +2515,7 @@
  * @param idx index of the register whose size to return
  * @return size of the instance's idx-th register block
  */
-#define DT_INST_REG_SIZE_BY_IDX(inst, idx) \
-	DT_REG_SIZE_BY_IDX(DT_DRV_INST(inst), idx)
+#define DT_INST_REG_SIZE_BY_IDX(inst, idx) DT_REG_SIZE_BY_IDX(DT_DRV_INST(inst), idx)
 
 /**
  * @brief Get a DT_DRV_COMPAT's register block address by name
@@ -2570,8 +2523,7 @@
  * @param name lowercase-and-underscores register specifier name
  * @return address of the register block with the given name
  */
-#define DT_INST_REG_ADDR_BY_NAME(inst, name) \
-	DT_REG_ADDR_BY_NAME(DT_DRV_INST(inst), name)
+#define DT_INST_REG_ADDR_BY_NAME(inst, name) DT_REG_ADDR_BY_NAME(DT_DRV_INST(inst), name)
 
 /**
  * @brief Get a DT_DRV_COMPAT's register block size by name
@@ -2579,8 +2531,7 @@
  * @param name lowercase-and-underscores register specifier name
  * @return size of the register block with the given name
  */
-#define DT_INST_REG_SIZE_BY_NAME(inst, name) \
-	DT_REG_SIZE_BY_NAME(DT_DRV_INST(inst), name)
+#define DT_INST_REG_SIZE_BY_NAME(inst, name) DT_REG_SIZE_BY_NAME(DT_DRV_INST(inst), name)
 
 /**
  * @brief Get a DT_DRV_COMPAT's (only) register block address
@@ -2603,8 +2554,7 @@
  * @param cell cell name specifier
  * @return the named value at the specifier given by the index
  */
-#define DT_INST_IRQ_BY_IDX(inst, idx, cell) \
-	DT_IRQ_BY_IDX(DT_DRV_INST(inst), idx, cell)
+#define DT_INST_IRQ_BY_IDX(inst, idx, cell) DT_IRQ_BY_IDX(DT_DRV_INST(inst), idx, cell)
 
 /**
  * @brief Get a DT_DRV_COMPAT interrupt specifier value by name
@@ -2613,8 +2563,7 @@
  * @param cell cell name specifier
  * @return the named value at the specifier given by the index
  */
-#define DT_INST_IRQ_BY_NAME(inst, name, cell) \
-	DT_IRQ_BY_NAME(DT_DRV_INST(inst), name, cell)
+#define DT_INST_IRQ_BY_NAME(inst, name, cell) DT_IRQ_BY_NAME(DT_DRV_INST(inst), name, cell)
 
 /**
  * @brief Get a DT_DRV_COMPAT interrupt specifier's value
@@ -2682,8 +2631,7 @@
  * @return 1 if any enabled node with that compatible is on that bus type,
  *         0 otherwise
  */
-#define DT_ANY_INST_ON_BUS_STATUS_OKAY(bus) \
-	DT_COMPAT_ON_BUS_INTERNAL(DT_DRV_COMPAT, bus)
+#define DT_ANY_INST_ON_BUS_STATUS_OKAY(bus) DT_COMPAT_ON_BUS_INTERNAL(DT_DRV_COMPAT, bus)
 
 /**
  * @brief Call "fn" on all nodes with compatible DT_DRV_COMPAT
@@ -2744,11 +2692,9 @@
  * @param fn Macro to call for each enabled node. Must accept an
  *           instance number as its only parameter.
  */
-#define DT_INST_FOREACH_STATUS_OKAY(fn) \
-	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT),	\
-		    (UTIL_CAT(DT_FOREACH_OKAY_INST_,		\
-			      DT_DRV_COMPAT)(fn)),		\
-		    ())
+#define DT_INST_FOREACH_STATUS_OKAY(fn)                                                            \
+	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT),                                      \
+		    (UTIL_CAT(DT_FOREACH_OKAY_INST_, DT_DRV_COMPAT)(fn)), ())
 
 /**
  * @brief Call "fn" on all nodes with compatible DT_DRV_COMPAT
@@ -2761,11 +2707,9 @@
  *
  * @see DT_INST_FOREACH_STATUS_OKAY
  */
-#define DT_INST_FOREACH_STATUS_OKAY_VARGS(fn, ...) \
-	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT),	\
-		    (UTIL_CAT(DT_FOREACH_OKAY_INST_VARGS_,	\
-			      DT_DRV_COMPAT)(fn, __VA_ARGS__)),	\
-		    ())
+#define DT_INST_FOREACH_STATUS_OKAY_VARGS(fn, ...)                                                 \
+	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT),                                      \
+		    (UTIL_CAT(DT_FOREACH_OKAY_INST_VARGS_, DT_DRV_COMPAT)(fn, __VA_ARGS__)), ())
 
 /**
  * @brief Invokes "fn" for each element of property "prop" for
@@ -2777,8 +2721,7 @@
  * @param prop lowercase-and-underscores property name
  * @param fn macro to invoke
  */
-#define DT_INST_FOREACH_PROP_ELEM(inst, prop, fn) \
-	DT_FOREACH_PROP_ELEM(DT_DRV_INST(inst), prop, fn)
+#define DT_INST_FOREACH_PROP_ELEM(inst, prop, fn) DT_FOREACH_PROP_ELEM(DT_DRV_INST(inst), prop, fn)
 
 /**
  * @brief Invokes "fn" for each element of property "prop" for
@@ -2794,7 +2737,7 @@
  *
  * @see DT_INST_FOREACH_PROP_ELEM
  */
-#define DT_INST_FOREACH_PROP_ELEM_VARGS(inst, prop, fn, ...) \
+#define DT_INST_FOREACH_PROP_ELEM_VARGS(inst, prop, fn, ...)                                       \
 	DT_FOREACH_PROP_ELEM_VARGS(DT_DRV_INST(inst), prop, fn, __VA_ARGS__)
 
 /**
@@ -2803,8 +2746,7 @@
  * @param prop lowercase-and-underscores property name
  * @return 1 if the instance has the property, 0 otherwise.
  */
-#define DT_INST_NODE_HAS_PROP(inst, prop) \
-	DT_NODE_HAS_PROP(DT_DRV_INST(inst), prop)
+#define DT_INST_NODE_HAS_PROP(inst, prop) DT_NODE_HAS_PROP(DT_DRV_INST(inst), prop)
 
 /**
  * @brief Does a phandle array have a named cell specifier at an index
@@ -2816,7 +2758,7 @@
  * @return 1 if the named cell exists in the specifier at index idx,
  *         0 otherwise.
  */
-#define DT_INST_PHA_HAS_CELL_AT_IDX(inst, pha, idx, cell) \
+#define DT_INST_PHA_HAS_CELL_AT_IDX(inst, pha, idx, cell)                                          \
 	DT_PHA_HAS_CELL_AT_IDX(DT_DRV_INST(inst), pha, idx, cell)
 
 /**
@@ -2828,8 +2770,7 @@
  * @return 1 if the named cell exists in the specifier at index 0,
  *         0 otherwise.
  */
-#define DT_INST_PHA_HAS_CELL(inst, pha, cell) \
-	DT_INST_PHA_HAS_CELL_AT_IDX(inst, pha, 0, cell)
+#define DT_INST_PHA_HAS_CELL(inst, pha, cell) DT_INST_PHA_HAS_CELL_AT_IDX(inst, pha, 0, cell)
 
 /**
  * @brief is index valid for interrupt property on a DT_DRV_COMPAT instance?
@@ -2848,7 +2789,7 @@
  * @return 1 if the named cell exists in the interrupt specifier at index idx
  *         0 otherwise.
  */
-#define DT_INST_IRQ_HAS_CELL_AT_IDX(inst, idx, cell) \
+#define DT_INST_IRQ_HAS_CELL_AT_IDX(inst, idx, cell)                                               \
 	DT_IRQ_HAS_CELL_AT_IDX(DT_DRV_INST(inst), idx, cell)
 
 /**
@@ -2858,8 +2799,7 @@
  * @return 1 if the named cell exists in the interrupt specifier at index 0
  *         0 otherwise.
  */
-#define DT_INST_IRQ_HAS_CELL(inst, cell) \
-	DT_INST_IRQ_HAS_CELL_AT_IDX(inst, 0, cell)
+#define DT_INST_IRQ_HAS_CELL(inst, cell) DT_INST_IRQ_HAS_CELL_AT_IDX(inst, 0, cell)
 
 /**
  * @brief Does a DT_DRV_COMPAT instance have an interrupt value?
@@ -2867,16 +2807,14 @@
  * @param name lowercase-and-underscores interrupt specifier name
  * @return 1 if "name" is a valid named specifier
  */
-#define DT_INST_IRQ_HAS_NAME(inst, name) \
-	DT_IRQ_HAS_NAME(DT_DRV_INST(inst), name)
+#define DT_INST_IRQ_HAS_NAME(inst, name) DT_IRQ_HAS_NAME(DT_DRV_INST(inst), name)
 
 /**
  * @}
  */
 
 /** @internal pay no attention to the man behind the curtain! */
-#define DT_PATH_INTERNAL(...) \
-	UTIL_CAT(DT_ROOT, MACRO_MAP_CAT(DT_S_PREFIX, __VA_ARGS__))
+#define DT_PATH_INTERNAL(...) UTIL_CAT(DT_ROOT, MACRO_MAP_CAT(DT_S_PREFIX, __VA_ARGS__))
 /** @internal helper for DT_PATH(): prepends _S_ to a node name */
 #define DT_S_PREFIX(name) _S_##name
 
@@ -2894,15 +2832,15 @@
  * Keeping things brutally simple here hopefully makes some errors
  * easier to read.
  */
-#define DT_CAT(a1, a2) a1 ## a2
+#define DT_CAT(a1, a2) a1##a2
 /** @internal concatenation helper, 3 arguments */
-#define DT_CAT3(a1, a2, a3) a1 ## a2 ## a3
+#define DT_CAT3(a1, a2, a3) a1##a2##a3
 /** @internal concatenation helper, 4 arguments */
-#define DT_CAT4(a1, a2, a3, a4) a1 ## a2 ## a3 ## a4
+#define DT_CAT4(a1, a2, a3, a4) a1##a2##a3##a4
 /** @internal concatenation helper, 5 arguments */
-#define DT_CAT5(a1, a2, a3, a4, a5) a1 ## a2 ## a3 ## a4 ## a5
+#define DT_CAT5(a1, a2, a3, a4, a5) a1##a2##a3##a4##a5
 /** @internal concatenation helper, 6 arguments */
-#define DT_CAT6(a1, a2, a3, a4, a5, a6) a1 ## a2 ## a3 ## a4 ## a5 ## a6
+#define DT_CAT6(a1, a2, a3, a4, a5, a6) a1##a2##a3##a4##a5##a6
 /*
  * If you need to define a bigger DT_CATN(), do so here. Don't leave
  * any "holes" of undefined macros, please.
@@ -2913,10 +2851,9 @@
 /** @internal helper for DT_DASH(): prepends _ to a name */
 #define DT_DASH_PREFIX(name) _##name
 /** @internal helper for DT_NODE_HAS_STATUS */
-#define DT_NODE_HAS_STATUS_INTERNAL(node_id, status) \
-	IS_ENABLED(DT_CAT(node_id, _STATUS_ ## status))
+#define DT_NODE_HAS_STATUS_INTERNAL(node_id, status) IS_ENABLED(DT_CAT(node_id, _STATUS_##status))
 /** @internal helper for test cases and DT_ANY_INST_ON_BUS_STATUS_OKAY() */
-#define DT_COMPAT_ON_BUS_INTERNAL(compat, bus) \
+#define DT_COMPAT_ON_BUS_INTERNAL(compat, bus)                                                     \
 	IS_ENABLED(UTIL_CAT(DT_CAT(DT_COMPAT_, compat), _BUS_##bus))
 
 /* have these last so they have access to all previously defined macros */
@@ -2930,5 +2867,6 @@
 #include <devicetree/zephyr.h>
 #include <devicetree/ordinals.h>
 #include <devicetree/pinctrl.h>
+#include <devicetree/reset.h>
 
 #endif /* DEVICETREE_H */
