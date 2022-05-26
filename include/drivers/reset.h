@@ -64,10 +64,10 @@ struct reset_dt_spec {
  * @param idx logical index into "resets"
  * @return static initializer for a struct reset_dt_spec for the property
  */
-#define RESET_DT_SPEC_GET_BY_IDX(node_id, idx)					\
-	{									\
-		.dev = DEVICE_DT_GET(DT_RESET_CTLR_BY_IDX(node_id, idx)),	\
-		.id = DT_RESET_ID_BY_IDX(node_id, idx)				\
+#define RESET_DT_SPEC_GET_BY_IDX(node_id, idx)                                                     \
+	{                                                                                          \
+		.dev = DEVICE_DT_GET(DT_RESET_CTLR_BY_IDX(node_id, idx)),                          \
+		.id = DT_RESET_ID_BY_IDX(node_id, idx)                                             \
 	}
 
 /**
@@ -77,8 +77,7 @@ struct reset_dt_spec {
  * @return static initializer for a struct reset_dt_spec for the property
  * @see RESET_DT_SPEC_GET_BY_IDX()
  */
-#define RESET_DT_SPEC_GET(node_id) \
-	RESET_DT_SPEC_GET_BY_IDX(node_id, 0)
+#define RESET_DT_SPEC_GET(node_id) RESET_DT_SPEC_GET_BY_IDX(node_id, 0)
 
 /**
  * @brief Static initializer for a @p reset_dt_spec from a DT_DRV_COMPAT
@@ -89,8 +88,7 @@ struct reset_dt_spec {
  * @return static initializer for a struct reset_dt_spec for the property
  * @see RESET_DT_SPEC_GET_BY_IDX()
  */
-#define RESET_DT_SPEC_INST_GET_BY_IDX(inst, idx) \
-	RESET_DT_SPEC_GET_BY_IDX(DT_DRV_INST(inst), idx)
+#define RESET_DT_SPEC_INST_GET_BY_IDX(inst, idx) RESET_DT_SPEC_GET_BY_IDX(DT_DRV_INST(inst), idx)
 
 /**
  * @brief Equivalent to RESET_DT_SPEC_INST_GET_BY_IDX(inst, 0).
@@ -99,8 +97,7 @@ struct reset_dt_spec {
  * @return static initializer for a struct reset_dt_spec for the property
  * @see RESET_DT_SPEC_INST_GET_BY_IDX()
  */
-#define RESET_DT_SPEC_INST_GET(inst) \
-	RESET_DT_SPEC_INST_GET_BY_IDX(inst, 0)
+#define RESET_DT_SPEC_INST_GET(inst) RESET_DT_SPEC_INST_GET_BY_IDX(inst, 0)
 
 /** @cond INTERNAL_HIDDEN */
 
@@ -114,32 +111,32 @@ typedef int (*reset_api_status)(const struct device *dev, uint32_t id, uint8_t *
 /**
  * API template to put the device in reset state.
  *
- * @see reset_assert
+ * @see reset_line_assert
  */
-typedef int (*reset_api_assert)(const struct device *dev, uint32_t id);
+typedef int (*reset_api_line_assert)(const struct device *dev, uint32_t id);
 
 /**
  * API template to take out the device from reset state.
  *
- * @see reset_deassert
+ * @see reset_line_deassert
  */
-typedef int (*reset_api_deassert)(const struct device *dev, uint32_t id);
+typedef int (*reset_api_line_deassert)(const struct device *dev, uint32_t id);
 
 /**
  * API template to reset the device.
  *
- * @see reset_toggle
+ * @see reset_line_toggle
  */
-typedef int (*reset_api_toggle)(const struct device *dev, uint32_t id);
+typedef int (*reset_api_line_toggle)(const struct device *dev, uint32_t id);
 
 /**
  * @brief Reset Controller driver API
  */
 __subsystem struct reset_driver_api {
 	reset_api_status status;
-	reset_api_assert assert;
-	reset_api_deassert deassert;
-	reset_api_toggle toggle;
+	reset_api_line_assert line_assert;
+	reset_api_line_deassert line_deassert;
+	reset_api_line_toggle line_toggle;
 };
 
 /** @endcond */
@@ -200,17 +197,17 @@ static inline int reset_status_dt(const struct reset_dt_spec *spec, uint8_t *sta
  * @retval -ENOSYS If the functionality is not implemented by the driver.
  * @retval -errno Other negative errno in case of failure.
  */
-__syscall int reset_assert(const struct device *dev, uint32_t id);
+__syscall int reset_line_assert(const struct device *dev, uint32_t id);
 
-static inline int z_impl_reset_assert(const struct device *dev, uint32_t id)
+static inline int z_impl_reset_line_assert(const struct device *dev, uint32_t id)
 {
 	const struct reset_driver_api *api = dev->api;
 
-	if (!api->assert) {
+	if (api->line_assert == NULL) {
 		return -ENOSYS;
 	}
 
-	return api->assert(dev, id);
+	return api->line_assert(dev, id);
 }
 
 /**
@@ -218,15 +215,15 @@ static inline int z_impl_reset_assert(const struct device *dev, uint32_t id)
  *
  * This is equivalent to:
  *
- *     reset_assert(spec->dev, spec->id);
+ *     reset_line_assert(spec->dev, spec->id);
  *
  * @param spec Reset controller specification from devicetree
  *
- * @return a value from reset_assert()
+ * @return a value from reset_line_assert()
  */
-static inline int reset_assert_dt(const struct reset_dt_spec *spec)
+static inline int reset_line_assert_dt(const struct reset_dt_spec *spec)
 {
-	return reset_assert(spec->dev, spec->id);
+	return reset_line_assert(spec->dev, spec->id);
 }
 
 /**
@@ -242,17 +239,17 @@ static inline int reset_assert_dt(const struct reset_dt_spec *spec)
  * @retval -ENOSYS If the functionality is not implemented by the driver.
  * @retval -errno Other negative errno in case of failure.
  */
-__syscall int reset_deassert(const struct device *dev, uint32_t id);
+__syscall int reset_line_deassert(const struct device *dev, uint32_t id);
 
-static inline int z_impl_reset_deassert(const struct device *dev, uint32_t id)
+static inline int z_impl_reset_line_deassert(const struct device *dev, uint32_t id)
 {
 	const struct reset_driver_api *api = dev->api;
 
-	if (!api->deassert) {
+	if (api->line_deassert == NULL) {
 		return -ENOSYS;
 	}
 
-	return api->deassert(dev, id);
+	return api->line_deassert(dev, id);
 }
 
 /**
@@ -260,15 +257,15 @@ static inline int z_impl_reset_deassert(const struct device *dev, uint32_t id)
  *
  * This is equivalent to:
  *
- *     reset_deassert(spec->dev, spec->id)
+ *     reset_line_deassert(spec->dev, spec->id)
  *
  * @param spec Reset controller specification from devicetree
  *
- * @return a value from reset_deassert()
+ * @return a value from reset_line_deassert()
  */
-static inline int reset_deassert_dt(const struct reset_dt_spec *spec)
+static inline int reset_line_deassert_dt(const struct reset_dt_spec *spec)
 {
-	return reset_deassert(spec->dev, spec->id);
+	return reset_line_deassert(spec->dev, spec->id);
 }
 
 /**
@@ -283,17 +280,17 @@ static inline int reset_deassert_dt(const struct reset_dt_spec *spec)
  * @retval -ENOSYS If the functionality is not implemented by the driver.
  * @retval -errno Other negative errno in case of failure.
  */
-__syscall int reset_toggle(const struct device *dev, uint32_t id);
+__syscall int reset_line_toggle(const struct device *dev, uint32_t id);
 
-static inline int z_impl_reset_toggle(const struct device *dev, uint32_t id)
+static inline int z_impl_reset_line_toggle(const struct device *dev, uint32_t id)
 {
 	const struct reset_driver_api *api = dev->api;
 
-	if (!api->toggle) {
+	if (api->line_toggle == NULL) {
 		return -ENOSYS;
 	}
 
-	return api->toggle(dev, id);
+	return api->line_toggle(dev, id);
 }
 
 /**
@@ -301,15 +298,15 @@ static inline int z_impl_reset_toggle(const struct device *dev, uint32_t id)
  *
  * This is equivalent to:
  *
- *     reset_toggle(spec->dev, spec->id)
+ *     reset_line_toggle(spec->dev, spec->id)
  *
  * @param spec Reset controller specification from devicetree
  *
- * @return a value from reset_toggle()
+ * @return a value from reset_line_toggle()
  */
-static inline int reset_toggle_dt(const struct reset_dt_spec *spec)
+static inline int reset_line_toggle_dt(const struct reset_dt_spec *spec)
 {
-	return reset_toggle(spec->dev, spec->id);
+	return reset_line_toggle(spec->dev, spec->id);
 }
 
 /**
