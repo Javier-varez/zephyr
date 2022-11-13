@@ -1,0 +1,30 @@
+# Copyright (c) 2022, Javier Alvarez <javier.alvarez@allthingsembedded.net>
+# SPDX-License-Identifier: Apache-2.0
+
+description: IS31FL3733 Dots matrix led driver
+
+compatible: "is31fl3733,leds"
+
+include: [i2c-device.yaml]
+
+properties:
+    power-gpios:
+      required: false
+      type: phandle-array
+      description: |
+        Handle to a pin used for powering on/off the led supply
+
+child-binding:
+    description: Led child node
+    properties:
+        channel:
+          required: true
+          type: int
+
+        label:
+          required: false
+          type: string
+          description: |
+            Human readable string describing the LED. It can be used by an
+            application to identify this LED or to retrieve its number/index
+            (i.e. child node number) on the parent device.

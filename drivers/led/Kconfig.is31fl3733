@@ -1,0 +1,8 @@
+# Copyright (c) 2022 Javier Alvarez <javier.alvarez@allthingsembedded.net>
+# SPDX-License-Identifier: Apache-2.0
+
+config IS31FL3733
+	bool "IS31FL3733 12x16 dots matrix led driver"
+	depends on I2C
+	help
+	  Enable driver for IS31FL3733.
