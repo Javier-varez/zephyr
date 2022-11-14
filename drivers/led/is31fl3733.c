@@ -41,7 +41,7 @@ struct is31fl3733_config {
 	const char *const i2c_name;
 	/** I2C chip address. */
 	const uint8_t i2c_address;
-	const struct gpio_dt_spec gpio_reset_spec;
+	const struct gpio_dt_spec *gpio_reset_spec;
 
 	const struct is31fl3733_child_config *const leds;
 	const int num_leds;
@@ -51,6 +51,31 @@ struct is31fl3733_config {
 struct is31fl3733_data {
 	/** I2C controller device. */
 	const struct device *const i2c_dev;
+	/** Currently selected page. */
+	int page;
+};
+
+struct is31fl3733_setting {
+	int page;
+	uint8_t reg_addr;
+	uint8_t reg_value;
+};
+
+static const struct is31fl3733_setting init_settings[] = {
+	{ .page = 3, .reg_addr = 2, .reg_value = (2 << 5) | (0 << 1) },
+	{ .page = 3, .reg_addr = 2, .reg_value = (2 << 5) },
+	{ .page = 3, .reg_addr = 3, .reg_value = (2 << 5) | (3 << 1) },
+	{ .page = 3, .reg_addr = 4, .reg_value = (0 << 4) },
+	{ .page = 3, .reg_addr = 6, .reg_value = (2 << 5) | (0 << 1) },
+	{ .page = 3, .reg_addr = 7, .reg_value = (2 << 5) | (2 << 1) },
+	{ .page = 3, .reg_addr = 8, .reg_value = (0 << 4) },
+	{ .page = 3, .reg_addr = 0xA, .reg_value = (1 << 5) | (0 << 1) },
+	{ .page = 3, .reg_addr = 0xB, .reg_value = (1 << 5) | (1 << 1) },
+	{ .page = 3, .reg_addr = 0xC, .reg_value = (0 << 4) },
+	{ .page = 3, .reg_addr = 0, .reg_value = 1 },
+	{ .page = 3, .reg_addr = 0, .reg_value = 3 },
+	{ .page = 3, .reg_addr = 0xE, .reg_value = 0 },
+	{ .page = 3, .reg_addr = 1, .reg_value = 128 },
 };
 
 static int is31fl3733_write_reg(const struct device *dev, uint8_t reg_addr, uint8_t value)
@@ -69,6 +94,12 @@ static int is31fl3733_read_reg(const struct device *dev, uint8_t reg_addr, uint8
 
 static int is31fl3733_set_page(const struct device *dev, uint32_t page)
 {
+	struct is31fl3733_data *const data = dev->data;
+	if (data->page == page) {
+		// Already selected
+		return 0;
+	}
+
 	int retval = is31fl3733_write_reg(dev, COMMAND_REGISTER_WRITE_LOCK_REG,
 					  COMMAND_REGISTER_LOCK_PASS);
 	if (retval < 0) {
@@ -82,6 +113,29 @@ static int is31fl3733_set_page(const struct device *dev, uint32_t page)
 		return retval;
 	}
 
+	data->page = page;
+	return 0;
+}
+
+static int is31fl3733_apply_settings(const struct device *dev,
+				     const struct is31fl3733_setting *settings,
+				     uint32_t settings_length)
+{
+	if (settings_length == 0xFFFFFFFF) {
+		return -EINVAL;
+	}
+
+	for (uint32_t i = 0; i < settings_length; i++) {
+		int retval = is31fl3733_set_page(dev, settings[i].page);
+		if (retval < 0) {
+			return retval;
+		}
+
+		retval = is31fl3733_write_reg(dev, settings[i].reg_addr, settings[i].reg_value);
+		if (retval < 0) {
+			return retval;
+		}
+	}
 	return 0;
 }
 
@@ -122,77 +176,7 @@ static int is31fl3733_reset(const struct device *const dev)
 
 static int is31fl3733_configure(const struct device *const dev)
 {
-	int retval = is31fl3733_set_page(dev, 3);
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 2, (2 << 5) | (0 << 1));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 2, (2 << 5));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 3, (2 << 5) | (3 << 1));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 4, (0 << 4));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 6, (2 << 5) | (0 << 1));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 7, (2 << 5) | (2 << 1));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 8, (0 << 4));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 0xA, (1 << 5) | (0 << 1));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 0xB, (1 << 5) | (1 << 1));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 0xC, (0 << 4));
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 0, 1);
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 0, 3);
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 0xE, 0);
-	if (retval < 0) {
-		return retval;
-	}
-
-	retval = is31fl3733_write_reg(dev, 1, 128);
+	int retval = is31fl3733_apply_settings(dev, init_settings, ARRAY_SIZE(init_settings));
 	if (retval < 0) {
 		return retval;
 	}
@@ -208,44 +192,49 @@ static int is31fl3733_configure(const struct device *const dev)
 			return retval;
 		}
 	}
-	return 0;
-}
 
-static int is31fl3733_set_brightness(const struct device *dev, uint32_t led, uint8_t value)
-{
-	return is31fl3733_set_channel(dev, led, value > 0);
+	return 0;
 }
 
 static int is31fl3733_led_on(const struct device *dev, uint32_t led)
 {
-	return 0;
+	return is31fl3733_set_channel(dev, led, true);
 }
 
 static int is31fl3733_led_off(const struct device *dev, uint32_t led)
 {
-	return 0;
+	return is31fl3733_set_channel(dev, led, false);
+}
+
+static int is31fl3733_led_brightness(const struct device *dev, uint32_t led, uint8_t value)
+{
+	return is31fl3733_set_channel(dev, led, value > 0);
 }
 
 static int is31fl3733_leds_init(const struct device *dev)
 {
 	const struct is31fl3733_config *config = dev->config;
 
-	int retval = gpio_pin_configure_dt(&config->gpio_reset_spec, GPIO_OUTPUT_HIGH);
-	if (retval < 0) {
-		LOG_ERR("Init error: could not claim gpio");
-		return retval;
+	int retval = 0;
+
+	if (config->gpio_reset_spec != NULL) {
+		retval = gpio_pin_configure_dt(config->gpio_reset_spec, GPIO_OUTPUT_HIGH);
+		if (retval < 0) {
+			LOG_ERR("Init error: could not claim gpio");
+			return -EINVAL;
+		}
 	}
 
 	retval = is31fl3733_reset(dev);
 	if (retval < 0) {
 		LOG_ERR("Init error: unable to reset device");
-		return retval;
+		return -ENODEV;
 	}
 
 	retval = is31fl3733_configure(dev);
 	if (retval < 0) {
 		LOG_ERR("Init error: unable to configure device");
-		return retval;
+		return -ENODEV;
 	}
 
 	return 0;
@@ -254,7 +243,7 @@ static int is31fl3733_leds_init(const struct device *dev)
 static const struct led_driver_api is31fl3733_leds_api = {
 	.on = is31fl3733_led_on,
 	.off = is31fl3733_led_off,
-	.set_brightness = is31fl3733_set_brightness,
+	.set_brightness = is31fl3733_led_brightness,
 };
 
 #define IS31FL3733_DEFINE_CHILD_LED(node_id)                                                       \
@@ -262,15 +251,24 @@ static const struct led_driver_api is31fl3733_leds_api = {
 		.channel = DT_PROP(node_id, channel),                                              \
 	},
 
+#define IS31FL3733_DEFINE_POWER_GPIO(index)                                                        \
+	const struct gpio_dt_spec gpio_reset_spec_##index =                                        \
+		GPIO_DT_SPEC_INST_GET(index, power_gpios)
+
 #define IS31FL3733_DEFINE_CONFIG(index)                                                            \
 	static const struct is31fl3733_child_config is31fl3733_child_config_##index[] = {          \
 		DT_INST_FOREACH_CHILD(index, IS31FL3733_DEFINE_CHILD_LED)                          \
 	};                                                                                         \
                                                                                                    \
+	/* Condtitionally define the power gpio (if available) */                                  \
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(index, power_gpios),                                     \
+		    (IS31FL3733_DEFINE_POWER_GPIO(index)), ());                                    \
+                                                                                                   \
 	static const struct is31fl3733_config is31fl3733_config_##index = {                        \
 		.i2c_name = DT_INST_BUS_LABEL(index),                                              \
 		.i2c_address = DT_INST_REG_ADDR(index),                                            \
-		.gpio_reset_spec = GPIO_DT_SPEC_INST_GET(index, power_gpios),                      \
+		.gpio_reset_spec = COND_CODE_1(DT_INST_NODE_HAS_PROP(index, power_gpios),          \
+					       (&gpio_reset_spec_##index), (NULL)),                \
 		.leds = is31fl3733_child_config_##index,                                           \
 		.num_leds = ARRAY_SIZE(is31fl3733_child_config_##index),                           \
 	}
@@ -278,6 +276,7 @@ static const struct led_driver_api is31fl3733_leds_api = {
 #define IS31FL3733_DEFINE_DATA(index)                                                              \
 	static struct is31fl3733_data is31fl3733_data_##index = {                                  \
 		.i2c_dev = DEVICE_DT_GET(DT_INST_BUS(index)),                                      \
+		.page = -1,                                                                        \
 	}
 
 #define IS31FL3733_DEVICE(i)                                                                       \
