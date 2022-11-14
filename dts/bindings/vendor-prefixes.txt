@@ -338,6 +338,7 @@ longcheer	Longcheer Technology (Shanghai) Co., Ltd.
 lontium	Lontium Semiconductor Corporation
 loongson	Loongson Technology Corporation Limited
 lsi	LSI Corp. (LSI Logic)
+lumissil	Lumissil Microsystems
 lwn	Liebherr-Werk Nenzing GmbH
 lxa	Linux Automation GmbH
 m5stack	M5Stack

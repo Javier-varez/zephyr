@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT is31fl3733_leds
+#define DT_DRV_COMPAT lumissil_is31fl3733
 
 /**
  * @file

@@ -3,7 +3,7 @@
 
 description: IS31FL3733 Dots matrix led driver
 
-compatible: "is31fl3733,leds"
+compatible: "lumissil,is31fl3733"
 
 include: [i2c-device.yaml]
 
