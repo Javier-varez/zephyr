@@ -428,11 +428,6 @@ static int is31fl3733_configure(const struct device *const dev)
 		if (retval < 0) {
 			return retval;
 		}
-
-		retval = api->led_on_off(dev, led, true);
-		if (retval < 0) {
-			return retval;
-		}
 	}
 
 	return 0;
