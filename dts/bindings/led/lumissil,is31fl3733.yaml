@@ -17,8 +17,28 @@ properties:
 child-binding:
     description: Led child node
     properties:
-        channel:
+        type:
           required: true
+          type: string
+
+        red-channel:
+          required: false
+          type: int
+
+        green-channel:
+          required: false
+          type: int
+
+        blue-channel:
+          required: false
+          type: int
+
+        default-color:
+          required: false
+          type: array
+
+        mode:
+          required: false
           type: int
 
         label:

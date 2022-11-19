@@ -21,18 +21,20 @@
 
 LOG_MODULE_REGISTER(is31fl3733_leds, CONFIG_LED_LOG_LEVEL);
 
-#define COMMAND_REGISTER_REG 0xFD
-#define COMMAND_REGISTER_WRITE_LOCK_REG 0xFE
-#define COMMAND_REGISTER_LOCK_PASS 0xC5
-
-#define PAGE_CONTROL 0x00
-#define PAGE_PWM 0x01
-#define PAGE_FUNCTION 0x03
-
-#define RESET_REG 0x11
+enum Mode {
+	PWM = 0,
+	AUTO_BREATH_1 = 1,
+	AUTO_BREATH_2 = 2,
+	AUTO_BREATH_3 = 3,
+};
 
 struct is31fl3733_child_config {
-	int channel;
+	const char *type;
+	uint32_t red_channel;
+	uint32_t green_channel;
+	uint32_t blue_channel;
+	uint32_t default_color[3];
+	enum Mode mode;
 };
 
 /** IS31FL3733 configuration (DT). */
@@ -53,61 +55,87 @@ struct is31fl3733_data {
 	const struct device *const i2c_dev;
 	/** Currently selected page. */
 	int page;
+	/** Cached state bitmap  */
+	uint8_t state[12 * 16 / 8];
+};
+
+struct is31fl3733_reg {
+	int page;
+	uint8_t addr;
 };
 
 struct is31fl3733_setting {
-	int page;
-	uint8_t reg_addr;
-	uint8_t reg_value;
+	struct is31fl3733_reg reg;
+	uint8_t value;
 };
+
+#define IS31FL3733_REG(page_num, reg_addr)                                                         \
+	{                                                                                          \
+		.page = page_num, .addr = reg_addr                                                 \
+	}
+
+#define PAGE_CONTROL 0x00
+#define PAGE_PWM 0x01
+#define PAGE_AUTO_BREATH_MODE 0x02
+#define PAGE_FUNCTION 0x03
+
+#define CONFIG_REG IS31FL3733_REG(PAGE_FUNCTION, 0)
+#define GCC_REG IS31FL3733_REG(PAGE_FUNCTION, 1)
+#define ABM_1_REG_1 IS31FL3733_REG(PAGE_FUNCTION, 2)
+#define ABM_1_REG_2 IS31FL3733_REG(PAGE_FUNCTION, 3)
+#define ABM_1_REG_3 IS31FL3733_REG(PAGE_FUNCTION, 4)
+#define ABM_1_REG_4 IS31FL3733_REG(PAGE_FUNCTION, 5)
+#define ABM_2_REG_1 IS31FL3733_REG(PAGE_FUNCTION, 6)
+#define ABM_2_REG_2 IS31FL3733_REG(PAGE_FUNCTION, 7)
+#define ABM_2_REG_3 IS31FL3733_REG(PAGE_FUNCTION, 8)
+#define ABM_2_REG_4 IS31FL3733_REG(PAGE_FUNCTION, 9)
+#define ABM_3_REG_1 IS31FL3733_REG(PAGE_FUNCTION, 0xa)
+#define ABM_3_REG_2 IS31FL3733_REG(PAGE_FUNCTION, 0xb)
+#define ABM_3_REG_3 IS31FL3733_REG(PAGE_FUNCTION, 0xc)
+#define ABM_3_REG_4 IS31FL3733_REG(PAGE_FUNCTION, 0xd)
+#define TIME_UPDATE_REG IS31FL3733_REG(PAGE_FUNCTION, 0xe)
+#define RESET_REG IS31FL3733_REG(PAGE_FUNCTION, 0x11)
+
+// These 2 registers are page independent since they are used for page switching
+#define COMMAND_REGISTER_REG 0xFD
+#define COMMAND_REGISTER_WRITE_LOCK_REG 0xFE
+#define COMMAND_REGISTER_LOCK_PASS 0xC5
 
 static const struct is31fl3733_setting init_settings[] = {
-	{ .page = 3, .reg_addr = 2, .reg_value = (2 << 5) | (0 << 1) },
-	{ .page = 3, .reg_addr = 2, .reg_value = (2 << 5) },
-	{ .page = 3, .reg_addr = 3, .reg_value = (2 << 5) | (3 << 1) },
-	{ .page = 3, .reg_addr = 4, .reg_value = (0 << 4) },
-	{ .page = 3, .reg_addr = 6, .reg_value = (2 << 5) | (0 << 1) },
-	{ .page = 3, .reg_addr = 7, .reg_value = (2 << 5) | (2 << 1) },
-	{ .page = 3, .reg_addr = 8, .reg_value = (0 << 4) },
-	{ .page = 3, .reg_addr = 0xA, .reg_value = (1 << 5) | (0 << 1) },
-	{ .page = 3, .reg_addr = 0xB, .reg_value = (1 << 5) | (1 << 1) },
-	{ .page = 3, .reg_addr = 0xC, .reg_value = (0 << 4) },
-	{ .page = 3, .reg_addr = 0, .reg_value = 1 },
-	{ .page = 3, .reg_addr = 0, .reg_value = 3 },
-	{ .page = 3, .reg_addr = 0xE, .reg_value = 0 },
-	{ .page = 3, .reg_addr = 1, .reg_value = 128 },
+	{ .reg = ABM_1_REG_1, .value = (2 << 5) | (0 << 1) },
+	{ .reg = ABM_1_REG_2, .value = (2 << 5) | (3 << 1) },
+	{ .reg = ABM_1_REG_3, .value = (0 << 4) },
+	{ .reg = ABM_2_REG_1, .value = (2 << 5) | (0 << 1) },
+	{ .reg = ABM_2_REG_2, .value = (2 << 5) | (2 << 1) },
+	{ .reg = ABM_2_REG_3, .value = (0 << 4) },
+	{ .reg = ABM_3_REG_1, .value = (1 << 5) | (0 << 1) },
+	{ .reg = ABM_3_REG_2, .value = (1 << 5) | (1 << 1) },
+	{ .reg = ABM_3_REG_3, .value = (0 << 4) },
+	{ .reg = CONFIG_REG, .value = 1 },
+	{ .reg = CONFIG_REG, .value = 3 },
+	{ .reg = TIME_UPDATE_REG, .value = 0 },
+	{ .reg = GCC_REG, .value = 128 },
 };
-
-static int is31fl3733_write_reg(const struct device *dev, uint8_t reg_addr, uint8_t value)
-{
-	const struct is31fl3733_config *const config = dev->config;
-	const struct is31fl3733_data *const data = dev->data;
-	return i2c_reg_write_byte(data->i2c_dev, config->i2c_address, reg_addr, value);
-}
-
-static int is31fl3733_read_reg(const struct device *dev, uint8_t reg_addr, uint8_t *value)
-{
-	const struct is31fl3733_config *const config = dev->config;
-	const struct is31fl3733_data *const data = dev->data;
-	return i2c_reg_read_byte(data->i2c_dev, config->i2c_address, reg_addr, value);
-}
 
 static int is31fl3733_set_page(const struct device *dev, uint32_t page)
 {
 	struct is31fl3733_data *const data = dev->data;
+	const struct is31fl3733_config *const config = dev->config;
+
 	if (data->page == page) {
 		// Already selected
 		return 0;
 	}
 
-	int retval = is31fl3733_write_reg(dev, COMMAND_REGISTER_WRITE_LOCK_REG,
-					  COMMAND_REGISTER_LOCK_PASS);
+	int retval =
+		i2c_reg_write_byte(data->i2c_dev, config->i2c_address,
+				   COMMAND_REGISTER_WRITE_LOCK_REG, COMMAND_REGISTER_LOCK_PASS);
 	if (retval < 0) {
 		LOG_ERR("Error setting register COMMAND_REGISTER_WRITE_LOCK_REG");
 		return retval;
 	}
 
-	is31fl3733_write_reg(dev, COMMAND_REGISTER_REG, page);
+	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, COMMAND_REGISTER_REG, page);
 	if (retval < 0) {
 		LOG_ERR("Error setting register COMMAND_REGISTER_REG");
 		return retval;
@@ -115,6 +143,64 @@ static int is31fl3733_set_page(const struct device *dev, uint32_t page)
 
 	data->page = page;
 	return 0;
+}
+
+static int is31fl3733_write_reg(const struct device *const dev, const struct is31fl3733_reg reg,
+				const uint8_t value)
+{
+	int retval = is31fl3733_set_page(dev, reg.page);
+	if (retval < 0) {
+		return retval;
+	}
+
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_data *const data = dev->data;
+	return i2c_reg_write_byte(data->i2c_dev, config->i2c_address, reg.addr, value);
+}
+
+static int is31fl3733_read_reg(const struct device *const dev, const struct is31fl3733_reg reg,
+			       uint8_t *const value)
+{
+	int retval = is31fl3733_set_page(dev, reg.page);
+	if (retval < 0) {
+		return retval;
+	}
+
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_data *const data = dev->data;
+	return i2c_reg_read_byte(data->i2c_dev, config->i2c_address, reg.addr, value);
+}
+
+static int is31fl3733_set_pixel_mode(const struct device *dev, uint32_t led, enum Mode mode)
+{
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_data *const data = dev->data;
+
+	if (led >= config->num_leds) {
+		return -ENOENT;
+	}
+
+	const struct is31fl3733_child_config *const led_config = &config->leds[led];
+
+	int retval = is31fl3733_set_page(dev, PAGE_AUTO_BREATH_MODE);
+	if (retval < 0) {
+		return retval;
+	}
+
+	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->red_channel,
+				    mode);
+	if (retval < 0) {
+		return retval;
+	}
+
+	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->green_channel,
+				    mode);
+	if (retval < 0) {
+		return retval;
+	}
+
+	return i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->blue_channel,
+				  mode);
 }
 
 static int is31fl3733_apply_settings(const struct device *dev,
@@ -126,12 +212,7 @@ static int is31fl3733_apply_settings(const struct device *dev,
 	}
 
 	for (uint32_t i = 0; i < settings_length; i++) {
-		int retval = is31fl3733_set_page(dev, settings[i].page);
-		if (retval < 0) {
-			return retval;
-		}
-
-		retval = is31fl3733_write_reg(dev, settings[i].reg_addr, settings[i].reg_value);
+		int retval = is31fl3733_write_reg(dev, settings[i].reg, settings[i].value);
 		if (retval < 0) {
 			return retval;
 		}
@@ -139,39 +220,86 @@ static int is31fl3733_apply_settings(const struct device *dev,
 	return 0;
 }
 
-static int is31fl3733_set_channel(const struct device *const dev, const uint32_t channel,
-				  const bool on)
+static int is31fl3733_set_brightness(const struct device *const dev, const uint32_t led,
+				     const uint8_t brightness)
 {
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_data *const data = dev->data;
+
+	if (led >= config->num_leds) {
+		return -ENOENT;
+	}
+
+	const struct is31fl3733_child_config *const led_config = &config->leds[led];
+
 	int retval = is31fl3733_set_page(dev, PAGE_PWM);
 	if (retval < 0) {
-		LOG_ERR("Error setting page");
 		return retval;
 	}
 
-	retval = is31fl3733_write_reg(dev, channel, on ? 0xff : 0);
+	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->red_channel,
+				    ((uint32_t)brightness) * (led_config->default_color[0]) / 256);
 	if (retval < 0) {
-		LOG_ERR("Error reading channel %d", channel);
 		return retval;
 	}
 
-	return 0;
+	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->green_channel,
+				    ((uint32_t)brightness) * (led_config->default_color[1]) / 256);
+	if (retval < 0) {
+		return retval;
+	}
+
+	return i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->blue_channel,
+				  ((uint32_t)brightness) * (led_config->default_color[2]) / 256);
 }
 
 static int is31fl3733_reset(const struct device *const dev)
 {
 	uint8_t val;
-	int retval = is31fl3733_set_page(dev, PAGE_FUNCTION);
+	const struct is31fl3733_reg reg = RESET_REG;
+	int retval = is31fl3733_read_reg(dev, reg, &val);
 	if (retval < 0) {
-		LOG_ERR("Error setting page for reset");
+		LOG_ERR("Error reading reset register");
+	}
+	return retval;
+}
+
+static int is31fl3733_channel_on_off(const struct device *const dev, const uint32_t channel,
+				     const bool on)
+{
+	struct is31fl3733_data *const data = dev->data;
+	const struct is31fl3733_reg reg = { .page = PAGE_CONTROL, .addr = channel / 8 };
+
+	if (on) {
+		data->state[channel / 8] |= 1 << (channel % 8);
+	} else {
+		data->state[channel / 8] &= ~(1 << (channel % 8));
+	}
+
+	return is31fl3733_write_reg(dev, reg, data->state[channel / 8]);
+}
+
+static int is31fl3733_led_on_off(const struct device *const dev, const uint32_t led, const bool on)
+{
+	const struct is31fl3733_config *const config = dev->config;
+
+	if (led >= config->num_leds) {
+		return -ENOENT;
+	}
+
+	const struct is31fl3733_child_config *const led_config = &config->leds[led];
+
+	int retval = is31fl3733_channel_on_off(dev, led_config->red_channel, on);
+	if (retval < 0) {
 		return retval;
 	}
 
-	retval = is31fl3733_read_reg(dev, RESET_REG, &val);
+	retval = is31fl3733_channel_on_off(dev, led_config->green_channel, on);
 	if (retval < 0) {
-		LOG_ERR("Error reading reset register");
 		return retval;
 	}
-	return 0;
+
+	return is31fl3733_channel_on_off(dev, led_config->blue_channel, on);
 }
 
 static int is31fl3733_configure(const struct device *const dev)
@@ -181,13 +309,24 @@ static int is31fl3733_configure(const struct device *const dev)
 		return retval;
 	}
 
-	retval = is31fl3733_set_page(dev, 0);
-	if (retval < 0) {
-		return retval;
-	}
+	// Configure each led
+	// - mode
+	// - brightness
+	// - initial state
 
-	for (uint32_t i = 0; i < 16 * 12; i++) {
-		retval = is31fl3733_write_reg(dev, i, 0xff);
+	const struct is31fl3733_config *const config = dev->config;
+	for (uint32_t led = 0; led < config->num_leds; led++) {
+		int retval = is31fl3733_set_pixel_mode(dev, led, config->leds[led].mode);
+		if (retval < 0) {
+			return retval;
+		}
+
+		retval = is31fl3733_set_brightness(dev, led, 0xff);
+		if (retval < 0) {
+			return retval;
+		}
+
+		retval = is31fl3733_led_on_off(dev, led, true);
 		if (retval < 0) {
 			return retval;
 		}
@@ -196,19 +335,25 @@ static int is31fl3733_configure(const struct device *const dev)
 	return 0;
 }
 
-static int is31fl3733_led_on(const struct device *dev, uint32_t led)
+static int is31fl3733_led_on(const struct device *dev, const uint32_t led)
 {
-	return is31fl3733_set_channel(dev, led, true);
+	return is31fl3733_led_on_off(dev, led, true);
 }
 
-static int is31fl3733_led_off(const struct device *dev, uint32_t led)
+static int is31fl3733_led_off(const struct device *dev, const uint32_t led)
 {
-	return is31fl3733_set_channel(dev, led, false);
+	return is31fl3733_led_on_off(dev, led, false);
 }
 
-static int is31fl3733_led_brightness(const struct device *dev, uint32_t led, uint8_t value)
+static int is31fl3733_led_brightness(const struct device *const dev, const uint32_t led,
+				     const uint8_t value)
 {
-	return is31fl3733_set_channel(dev, led, value > 0);
+	const int retval = is31fl3733_led_on_off(dev, led, value > 0);
+	if (retval < 0) {
+		return retval;
+	}
+
+	return is31fl3733_set_brightness(dev, led, value);
 }
 
 static int is31fl3733_leds_init(const struct device *dev)
@@ -248,7 +393,12 @@ static const struct led_driver_api is31fl3733_leds_api = {
 
 #define IS31FL3733_DEFINE_CHILD_LED(node_id)                                                       \
 	{                                                                                          \
-		.channel = DT_PROP(node_id, channel),                                              \
+		.type = DT_PROP(node_id, type),                                                    \
+		.red_channel = DT_PROP_OR(node_id, red_channel, 0),                                \
+		.green_channel = DT_PROP_OR(node_id, green_channel, 0),                            \
+		.blue_channel = DT_PROP_OR(node_id, blue_channel, 0),                              \
+		.default_color = DT_PROP_OR(node_id, default_color, __DEBRACKET({ 0, 0, 0 })),     \
+		.mode = DT_PROP_OR(node_id, mode, Mode::PWM),                                      \
 	},
 
 #define IS31FL3733_DEFINE_POWER_GPIO(index)                                                        \
