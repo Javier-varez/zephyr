@@ -28,25 +28,88 @@ enum Mode {
 	AUTO_BREATH_3 = 3,
 };
 
-struct is31fl3733_child_config {
-	const char *type;
-	uint32_t red_channel;
-	uint32_t green_channel;
-	uint32_t blue_channel;
-	uint32_t default_color[3];
-	enum Mode mode;
+enum LedType {
+	RGB = 0,
+	RGB_BREATHING = 1,
 };
 
-/** IS31FL3733 configuration (DT). */
-struct is31fl3733_config {
-	/** I2C controller device name. */
-	const char *const i2c_name;
-	/** I2C chip address. */
-	const uint8_t i2c_address;
-	const struct gpio_dt_spec *gpio_reset_spec;
+#define NUM_CHANNELS 3
 
-	const struct is31fl3733_child_config *const leds;
-	const int num_leds;
+struct is31fl3733_mono_config {
+	enum LedType type;
+	uint8_t channel;
+	uint8_t default_color;
+};
+
+struct is31fl3733_rgb_config {
+	enum LedType type;
+	uint8_t channels[NUM_CHANNELS];
+	uint8_t default_color[NUM_CHANNELS];
+};
+
+struct is31fl3733_rgb_breath_config {
+	enum LedType type;
+	uint8_t channels[NUM_CHANNELS];
+	uint8_t breath_modes[NUM_CHANNELS];
+};
+
+struct is31fl3733_generic_config {
+	enum LedType type;
+};
+
+typedef int led_configure_t(const struct device *const dev, const uint32_t led);
+typedef int led_on_off_t(const struct device *const dev, const uint32_t led, const bool on);
+typedef int led_brightness_t(const struct device *const dev, const uint32_t led,
+			     const uint8_t brightness);
+
+struct is31fl3733_led_api {
+	led_configure_t *led_configure;
+	led_on_off_t *led_on_off;
+	led_brightness_t *led_brightness;
+};
+
+static int rgb_led_configure(const struct device *const dev, const uint32_t led);
+static int rgb_led_on_off(const struct device *const dev, const uint32_t led, const bool on);
+static int rgb_led_brightness(const struct device *const dev, const uint32_t led,
+			      const uint8_t brightness);
+
+static struct is31fl3733_led_api rgb_led_api = {
+	.led_configure = rgb_led_configure,
+	.led_on_off = rgb_led_on_off,
+	.led_brightness = rgb_led_brightness,
+};
+
+static int breathing_rgb_led_configure(const struct device *const dev, const uint32_t led);
+static int breathing_rgb_led_on_off(const struct device *const dev, const uint32_t led,
+				    const bool on);
+static int breathing_rgb_led_brightness(const struct device *const dev, const uint32_t led,
+					const uint8_t brightness);
+
+static struct is31fl3733_led_api breathing_rgb_led_api = {
+	.led_configure = breathing_rgb_led_configure,
+	.led_on_off = breathing_rgb_led_on_off,
+	.led_brightness = breathing_rgb_led_brightness,
+};
+
+struct is31fl3733_led_api *get_led_api(const enum LedType type)
+{
+	switch (type) {
+	case RGB:
+		return &rgb_led_api;
+	case RGB_BREATHING:
+		return &breathing_rgb_led_api;
+	}
+	return NULL;
+}
+
+struct is31fl3733_reg {
+	int page;
+	uint8_t addr;
+};
+
+struct is31fl3733_setting {
+	struct is31fl3733_reg reg;
+	uint8_t value;
 };
 
 /** IS31FL3733 data . */
@@ -59,14 +122,18 @@ struct is31fl3733_data {
 	uint8_t state[12 * 16 / 8];
 };
 
-struct is31fl3733_reg {
-	int page;
-	uint8_t addr;
-};
+/** IS31FL3733 configuration (DT). */
+struct is31fl3733_config {
+	/** I2C controller device name. */
+	const char *const i2c_name;
+	/** I2C chip address. */
+	const uint8_t i2c_address;
+	const struct gpio_dt_spec *gpio_reset_spec;
 
-struct is31fl3733_setting {
-	struct is31fl3733_reg reg;
-	uint8_t value;
+	const struct is31fl3733_generic_config *const *const leds;
+	const int num_leds;
+	const struct is31fl3733_setting *init_settings;
+	const int num_init_settings;
 };
 
 #define IS31FL3733_REG(page_num, reg_addr)                                                         \
@@ -100,22 +167,6 @@ struct is31fl3733_setting {
 #define COMMAND_REGISTER_REG 0xFD
 #define COMMAND_REGISTER_WRITE_LOCK_REG 0xFE
 #define COMMAND_REGISTER_LOCK_PASS 0xC5
-
-static const struct is31fl3733_setting init_settings[] = {
-	{ .reg = ABM_1_REG_1, .value = (2 << 5) | (0 << 1) },
-	{ .reg = ABM_1_REG_2, .value = (2 << 5) | (3 << 1) },
-	{ .reg = ABM_1_REG_3, .value = (0 << 4) },
-	{ .reg = ABM_2_REG_1, .value = (2 << 5) | (0 << 1) },
-	{ .reg = ABM_2_REG_2, .value = (2 << 5) | (2 << 1) },
-	{ .reg = ABM_2_REG_3, .value = (0 << 4) },
-	{ .reg = ABM_3_REG_1, .value = (1 << 5) | (0 << 1) },
-	{ .reg = ABM_3_REG_2, .value = (1 << 5) | (1 << 1) },
-	{ .reg = ABM_3_REG_3, .value = (0 << 4) },
-	{ .reg = CONFIG_REG, .value = 1 },
-	{ .reg = CONFIG_REG, .value = 3 },
-	{ .reg = TIME_UPDATE_REG, .value = 0 },
-	{ .reg = GCC_REG, .value = 128 },
-};
 
 static int is31fl3733_set_page(const struct device *dev, uint32_t page)
 {
@@ -171,7 +222,7 @@ static int is31fl3733_read_reg(const struct device *const dev, const struct is31
 	return i2c_reg_read_byte(data->i2c_dev, config->i2c_address, reg.addr, value);
 }
 
-static int is31fl3733_set_pixel_mode(const struct device *dev, uint32_t led, enum Mode mode)
+static int rgb_led_configure(const struct device *const dev, const uint32_t led)
 {
 	const struct is31fl3733_config *const config = dev->config;
 	const struct is31fl3733_data *const data = dev->data;
@@ -180,27 +231,52 @@ static int is31fl3733_set_pixel_mode(const struct device *dev, uint32_t led, enu
 		return -ENOENT;
 	}
 
-	const struct is31fl3733_child_config *const led_config = &config->leds[led];
+	const struct is31fl3733_rgb_config *const led_config =
+		(const struct is31fl3733_rgb_config *)config->leds[led];
 
 	int retval = is31fl3733_set_page(dev, PAGE_AUTO_BREATH_MODE);
 	if (retval < 0) {
 		return retval;
 	}
 
-	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->red_channel,
-				    mode);
+	for (unsigned int i = 0; i < NUM_CHANNELS; i++) {
+		retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address,
+					    led_config->channels[i], PWM);
+		if (retval < 0) {
+			return retval;
+		}
+	}
+
+	return 0;
+}
+
+static int breathing_rgb_led_configure(const struct device *const dev, const uint32_t led)
+{
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_data *const data = dev->data;
+
+	if (led >= config->num_leds) {
+		return -ENOENT;
+	}
+
+	const struct is31fl3733_rgb_breath_config *const led_config =
+		(const struct is31fl3733_rgb_breath_config *)config->leds[led];
+
+	int retval = is31fl3733_set_page(dev, PAGE_AUTO_BREATH_MODE);
 	if (retval < 0) {
 		return retval;
 	}
 
-	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->green_channel,
-				    mode);
-	if (retval < 0) {
-		return retval;
+	for (unsigned int i = 0; i < NUM_CHANNELS; i++) {
+		retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address,
+					    led_config->channels[i],
+					    led_config->breath_modes[i] + AUTO_BREATH_1);
+		if (retval < 0) {
+			return retval;
+		}
 	}
 
-	return i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->blue_channel,
-				  mode);
+	return 0;
 }
 
 static int is31fl3733_apply_settings(const struct device *dev,
@@ -220,8 +296,15 @@ static int is31fl3733_apply_settings(const struct device *dev,
 	return 0;
 }
 
-static int is31fl3733_set_brightness(const struct device *const dev, const uint32_t led,
-				     const uint8_t brightness)
+static int breathing_rgb_led_brightness(const struct device *const dev, const uint32_t led,
+					const uint8_t brightness)
+{
+	// Not applicable
+	return 0;
+}
+
+static int rgb_led_brightness(const struct device *const dev, const uint32_t led,
+			      const uint8_t brightness)
 {
 	const struct is31fl3733_config *const config = dev->config;
 	const struct is31fl3733_data *const data = dev->data;
@@ -230,27 +313,24 @@ static int is31fl3733_set_brightness(const struct device *const dev, const uint3
 		return -ENOENT;
 	}
 
-	const struct is31fl3733_child_config *const led_config = &config->leds[led];
+	const struct is31fl3733_rgb_config *const led_config =
+		(const struct is31fl3733_rgb_config *)config->leds[led];
 
 	int retval = is31fl3733_set_page(dev, PAGE_PWM);
 	if (retval < 0) {
 		return retval;
 	}
 
-	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->red_channel,
-				    ((uint32_t)brightness) * (led_config->default_color[0]) / 256);
-	if (retval < 0) {
-		return retval;
+	for (unsigned int i = 0; i < NUM_CHANNELS; i++) {
+		retval = i2c_reg_write_byte(
+			data->i2c_dev, config->i2c_address, led_config->channels[i],
+			((uint32_t)brightness) * (led_config->default_color[i]) / 256);
+		if (retval < 0) {
+			return retval;
+		}
 	}
 
-	retval = i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->green_channel,
-				    ((uint32_t)brightness) * (led_config->default_color[1]) / 256);
-	if (retval < 0) {
-		return retval;
-	}
-
-	return i2c_reg_write_byte(data->i2c_dev, config->i2c_address, led_config->blue_channel,
-				  ((uint32_t)brightness) * (led_config->default_color[2]) / 256);
+	return 0;
 }
 
 static int is31fl3733_reset(const struct device *const dev)
@@ -279,54 +359,77 @@ static int is31fl3733_channel_on_off(const struct device *const dev, const uint3
 	return is31fl3733_write_reg(dev, reg, data->state[channel / 8]);
 }
 
-static int is31fl3733_led_on_off(const struct device *const dev, const uint32_t led, const bool on)
+static int rgb_led_on_off(const struct device *const dev, const uint32_t led, const bool on)
 {
 	const struct is31fl3733_config *const config = dev->config;
-
 	if (led >= config->num_leds) {
 		return -ENOENT;
 	}
 
-	const struct is31fl3733_child_config *const led_config = &config->leds[led];
-
-	int retval = is31fl3733_channel_on_off(dev, led_config->red_channel, on);
-	if (retval < 0) {
-		return retval;
+	const struct is31fl3733_rgb_config *const led_config =
+		(const struct is31fl3733_rgb_config *)config->leds[led];
+	for (unsigned int i = 0; i < NUM_CHANNELS; i++) {
+		int retval = is31fl3733_channel_on_off(dev, led_config->channels[i], on);
+		if (retval < 0) {
+			return retval;
+		}
 	}
 
-	retval = is31fl3733_channel_on_off(dev, led_config->green_channel, on);
-	if (retval < 0) {
-		return retval;
+	return 0;
+}
+
+static int breathing_rgb_led_on_off(const struct device *const dev, const uint32_t led,
+				    const bool on)
+{
+	const struct is31fl3733_config *const config = dev->config;
+	if (led >= config->num_leds) {
+		return -ENOENT;
 	}
 
-	return is31fl3733_channel_on_off(dev, led_config->blue_channel, on);
+	const struct is31fl3733_rgb_breath_config *const led_config =
+		(const struct is31fl3733_rgb_breath_config *)config->leds[led];
+	for (unsigned int i = 0; i < NUM_CHANNELS; i++) {
+		int retval = is31fl3733_channel_on_off(dev, led_config->channels[i], on);
+		if (retval < 0) {
+			return retval;
+		}
+	}
+
+	return 0;
 }
 
 static int is31fl3733_configure(const struct device *const dev)
 {
-	int retval = is31fl3733_apply_settings(dev, init_settings, ARRAY_SIZE(init_settings));
+	const struct is31fl3733_config *const config = dev->config;
+
+	int retval =
+		is31fl3733_apply_settings(dev, config->init_settings, config->num_init_settings);
 	if (retval < 0) {
 		return retval;
 	}
 
-	// Configure each led
-	// - mode
-	// - brightness
-	// - initial state
-
-	const struct is31fl3733_config *const config = dev->config;
 	for (uint32_t led = 0; led < config->num_leds; led++) {
-		int retval = is31fl3733_set_pixel_mode(dev, led, config->leds[led].mode);
+		const struct is31fl3733_led_api *const api = get_led_api(config->leds[led]->type);
+		if (api == NULL) {
+			return -EINVAL;
+		}
+
+		retval = api->led_on_off(dev, led, false);
 		if (retval < 0) {
 			return retval;
 		}
 
-		retval = is31fl3733_set_brightness(dev, led, 0xff);
+		int retval = api->led_configure(dev, led);
 		if (retval < 0) {
 			return retval;
 		}
 
-		retval = is31fl3733_led_on_off(dev, led, true);
+		retval = api->led_brightness(dev, led, 0xff);
+		if (retval < 0) {
+			return retval;
+		}
+
+		retval = api->led_on_off(dev, led, true);
 		if (retval < 0) {
 			return retval;
 		}
@@ -337,23 +440,41 @@ static int is31fl3733_configure(const struct device *const dev)
 
 static int is31fl3733_led_on(const struct device *dev, const uint32_t led)
 {
-	return is31fl3733_led_on_off(dev, led, true);
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_led_api *const api = get_led_api(config->leds[led]->type);
+	if (api == NULL) {
+		return -EINVAL;
+	}
+
+	return api->led_on_off(dev, led, true);
 }
 
 static int is31fl3733_led_off(const struct device *dev, const uint32_t led)
 {
-	return is31fl3733_led_on_off(dev, led, false);
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_led_api *const api = get_led_api(config->leds[led]->type);
+	if (api == NULL) {
+		return -EINVAL;
+	}
+
+	return api->led_on_off(dev, led, false);
 }
 
 static int is31fl3733_led_brightness(const struct device *const dev, const uint32_t led,
 				     const uint8_t value)
 {
-	const int retval = is31fl3733_led_on_off(dev, led, value > 0);
+	const struct is31fl3733_config *const config = dev->config;
+	const struct is31fl3733_led_api *const api = get_led_api(config->leds[led]->type);
+	if (api == NULL) {
+		return -EINVAL;
+	}
+
+	int retval = api->led_on_off(dev, led, value > 0);
 	if (retval < 0) {
 		return retval;
 	}
 
-	return is31fl3733_set_brightness(dev, led, value);
+	return api->led_brightness(dev, led, value);
 }
 
 static int is31fl3733_leds_init(const struct device *dev)
@@ -391,28 +512,72 @@ static const struct led_driver_api is31fl3733_leds_api = {
 	.set_brightness = is31fl3733_led_brightness,
 };
 
+#define DT_INST_PROP_BY_IDX_OR(inst, prop, idx, or)                                                \
+	COND_CODE_1(DT_INST_PROP_HAS_IDX(inst, prop, idx), (DT_INST_PROP_BY_IDX(inst, prop, idx)), \
+		    (or))
+
+#define IS31FL3733_DEFINE_RGB_LED(node_id)                                                         \
+	static struct is31fl3733_rgb_config led_config##node_id = {                                \
+		.type = RGB,                                                                       \
+		.channels = DT_PROP(node_id, channels),                                            \
+		.default_color =                                                                   \
+			DT_PROP_OR(node_id, default_color, __DEBRACKET({ 255, 255, 255 })),        \
+	};
+
+#define IS31FL3733_DEFINE_RGB_BREATHING_LED(node_id)                                               \
+	static struct is31fl3733_rgb_breath_config led_config##node_id = {                         \
+		.type = RGB_BREATHING,                                                             \
+		.channels = DT_PROP(node_id, channels),                                            \
+		.breath_modes = DT_PROP_OR(node_id, breath_modes, __DEBRACKET({ 0, 0, 0 })),       \
+	};
+
 #define IS31FL3733_DEFINE_CHILD_LED(node_id)                                                       \
-	{                                                                                          \
-		.type = DT_PROP(node_id, type),                                                    \
-		.red_channel = DT_PROP_OR(node_id, red_channel, 0),                                \
-		.green_channel = DT_PROP_OR(node_id, green_channel, 0),                            \
-		.blue_channel = DT_PROP_OR(node_id, blue_channel, 0),                              \
-		.default_color = DT_PROP_OR(node_id, default_color, __DEBRACKET({ 0, 0, 0 })),     \
-		.mode = DT_PROP_OR(node_id, mode, Mode::PWM),                                      \
-	},
+	COND_CODE_0(DT_ENUM_IDX(node_id, type), (IS31FL3733_DEFINE_RGB_LED(node_id)),              \
+		    (IS31FL3733_DEFINE_RGB_BREATHING_LED(node_id)))
+
+#define IS31FL3733_LINK_CHILD_LED(node_id) (struct is31fl3733_generic_config *)&led_config##node_id,
 
 #define IS31FL3733_DEFINE_POWER_GPIO(index)                                                        \
 	const struct gpio_dt_spec gpio_reset_spec_##index =                                        \
 		GPIO_DT_SPEC_INST_GET(index, power_gpios)
 
 #define IS31FL3733_DEFINE_CONFIG(index)                                                            \
-	static const struct is31fl3733_child_config is31fl3733_child_config_##index[] = {          \
-		DT_INST_FOREACH_CHILD(index, IS31FL3733_DEFINE_CHILD_LED)                          \
+	DT_INST_FOREACH_CHILD(index, IS31FL3733_DEFINE_CHILD_LED)                                  \
+	static const struct is31fl3733_generic_config *is31fl3733_child_config_##index[] = {       \
+		DT_INST_FOREACH_CHILD(index, IS31FL3733_LINK_CHILD_LED)                            \
 	};                                                                                         \
                                                                                                    \
 	/* Condtitionally define the power gpio (if available) */                                  \
 	COND_CODE_1(DT_INST_NODE_HAS_PROP(index, power_gpios),                                     \
 		    (IS31FL3733_DEFINE_POWER_GPIO(index)), ());                                    \
+                                                                                                   \
+	static struct is31fl3733_setting init_settings##index[] = {                                \
+		{ .reg = ABM_1_REG_1,                                                              \
+		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_1, 0, 0) << 5) |        \
+			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_1, 1, 0) << 1) },       \
+		{ .reg = ABM_1_REG_2,                                                              \
+		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_1, 2, 0) << 5) |        \
+			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_1, 3, 0) << 1) },       \
+		{ .reg = ABM_1_REG_3, .value = 0 },                                                \
+		{ .reg = ABM_2_REG_1,                                                              \
+		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 0, 0) << 5) |        \
+			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 1, 0) << 1) },       \
+		{ .reg = ABM_2_REG_2,                                                              \
+		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 2, 0) << 5) |        \
+			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 3, 0) << 1) },       \
+		{ .reg = ABM_2_REG_3, .value = 0 },                                                \
+		{ .reg = ABM_3_REG_1,                                                              \
+		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_3, 0, 0) << 5) |        \
+			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_3, 1, 0) << 1) },       \
+		{ .reg = ABM_3_REG_2,                                                              \
+		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 2, 0) << 5) |        \
+			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 3, 0) << 1) },       \
+		{ .reg = ABM_3_REG_3, .value = 0 },                                                \
+		{ .reg = CONFIG_REG, .value = 1 },                                                 \
+		{ .reg = CONFIG_REG, .value = 3 },                                                 \
+		{ .reg = TIME_UPDATE_REG, .value = 0 },                                            \
+		{ .reg = GCC_REG, .value = 128 },                                                  \
+	};                                                                                         \
                                                                                                    \
 	static const struct is31fl3733_config is31fl3733_config_##index = {                        \
 		.i2c_name = DT_INST_BUS_LABEL(index),                                              \
@@ -421,6 +586,8 @@ static const struct led_driver_api is31fl3733_leds_api = {
 					       (&gpio_reset_spec_##index), (NULL)),                \
 		.leds = is31fl3733_child_config_##index,                                           \
 		.num_leds = ARRAY_SIZE(is31fl3733_child_config_##index),                           \
+		.init_settings = init_settings##index,                                             \
+		.num_init_settings = ARRAY_SIZE(init_settings##index),                             \
 	}
 
 #define IS31FL3733_DEFINE_DATA(index)                                                              \

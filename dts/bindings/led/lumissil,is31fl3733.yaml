@@ -14,37 +14,42 @@ properties:
       description: |
         Handle to a pin used for powering on/off the led supply
 
+    auto-breath-mode-1:
+      required: false
+      type: array
+      description: |
+        Timings for auto-breath-mode 1. Must be an array <T1 T2 T3 T4>
+
+    auto-breath-mode-2:
+      required: false
+      type: array
+      description: |
+        Timings for auto-breath-mode 2. Must be an array <T1 T2 T3 T4>
+
+    auto-breath-mode-3:
+      required: false
+      type: array
+      description: |
+        Timings for auto-breath-mode 3. Must be an array <T1 T2 T3 T4>
+
 child-binding:
     description: Led child node
     properties:
         type:
           required: true
           type: string
+          enum:
+           - "rgb"
+           - "breathing-rgb"
 
-        red-channel:
+        channels:
           required: false
-          type: int
+          type: array
 
-        green-channel:
+        breath-modes:
           required: false
-          type: int
-
-        blue-channel:
-          required: false
-          type: int
+          type: array
 
         default-color:
           required: false
           type: array
-
-        mode:
-          required: false
-          type: int
-
-        label:
-          required: false
-          type: string
-          description: |
-            Human readable string describing the LED. It can be used by an
-            application to identify this LED or to retrieve its number/index
-            (i.e. child node number) on the parent device.
