@@ -12,25 +12,32 @@ properties:
       required: false
       type: phandle-array
       description: |
-        Handle to a pin used for powering on/off the led supply
+        Handle to a pin used for powering on/off the led supply.
 
     auto-breath-mode-1:
       required: false
       type: array
       description: |
-        Timings for auto-breath-mode 1. Must be an array <T1 T2 T3 T4>
+        Timings for auto-breath-mode 1. Must be an array <T1 T2 T3 T4>.
 
     auto-breath-mode-2:
       required: false
       type: array
       description: |
-        Timings for auto-breath-mode 2. Must be an array <T1 T2 T3 T4>
+        Timings for auto-breath-mode 2. Must be an array <T1 T2 T3 T4>.
 
     auto-breath-mode-3:
       required: false
       type: array
       description: |
-        Timings for auto-breath-mode 3. Must be an array <T1 T2 T3 T4>
+        Timings for auto-breath-mode 3. Must be an array <T1 T2 T3 T4>.
+
+    global-current-control:
+      required: false
+      type: int
+      description: |
+        The setting for the GCC register. Defaults to 128. Must be a number
+        between 0 and 255.
 
 child-binding:
     description: Led child node
@@ -41,15 +48,24 @@ child-binding:
           enum:
            - "rgb"
            - "breathing-rgb"
+          description: |
+            The type of LED
 
         channels:
-          required: false
+          required: true
           type: array
+          description: |
+            An array of 3 channels in order <Red Green Blue>.
 
         breath-modes:
           required: false
           type: array
+          description: |
+            An array of 3 elements for each channel of the led. Accepted
+            values are 0, 1 or 2, indicating the selected auto-breath-mode index.
 
         default-color:
           required: false
           type: array
+          description: |
+            The default LED color, as a 3-integer array in order <Red Green Blue>.

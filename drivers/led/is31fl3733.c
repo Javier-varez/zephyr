@@ -565,13 +565,14 @@ static const struct led_driver_api is31fl3733_leds_api = {
 		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_3, 0, 0) << 5) |        \
 			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_3, 1, 0) << 1) },       \
 		{ .reg = ABM_3_REG_2,                                                              \
-		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 2, 0) << 5) |        \
-			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_2, 3, 0) << 1) },       \
+		  .value = (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_3, 2, 0) << 5) |        \
+			   (DT_INST_PROP_BY_IDX_OR(index, auto_breath_mode_3, 3, 0) << 1) },       \
 		{ .reg = ABM_3_REG_3, .value = 0 },                                                \
 		{ .reg = CONFIG_REG, .value = 1 },                                                 \
 		{ .reg = CONFIG_REG, .value = 3 },                                                 \
 		{ .reg = TIME_UPDATE_REG, .value = 0 },                                            \
-		{ .reg = GCC_REG, .value = 128 },                                                  \
+		{ .reg = GCC_REG,                                                                  \
+		  .value = DT_INST_PROP_OR(index, global_current_control, (128)) },                \
 	};                                                                                         \
                                                                                                    \
 	static const struct is31fl3733_config is31fl3733_config_##index = {                        \
