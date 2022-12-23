@@ -10,9 +10,9 @@
 #include <hardware/structs/usb.h>
 #include <hardware/resets.h>
 
-#include <zephyr/usb/usb_device.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/logging/log.h>
+#include <usb/usb_device.h>
+#include <sys/util.h>
+#include <logging/log.h>
 
 LOG_MODULE_REGISTER(udc_rpi, CONFIG_USB_DRIVER_LOG_LEVEL);
 
@@ -201,8 +201,8 @@ static void udc_rpi_isr(const void *arg)
 		msg.ep = 0U;
 		msg.ep_event = false;
 		msg.type = usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS ?
-			USB_DC_DISCONNECTED :
-			USB_DC_CONNECTED;
+				   USB_DC_DISCONNECTED :
+				   USB_DC_CONNECTED;
 
 		k_msgq_put(&usb_dc_msgq, &msg, K_NO_WAIT);
 	}
@@ -299,10 +299,8 @@ static int udc_rpi_init(void)
 		udc_rpi_init_endpoint(i);
 	}
 
-	k_thread_create(&thread, thread_stack,
-			USBD_THREAD_STACK_SIZE,
-			udc_rpi_thread_main, NULL, NULL, NULL,
-			K_PRIO_COOP(2), 0, K_NO_WAIT);
+	k_thread_create(&thread, thread_stack, USBD_THREAD_STACK_SIZE, udc_rpi_thread_main, NULL,
+			NULL, NULL, K_PRIO_COOP(2), 0, K_NO_WAIT);
 
 	IRQ_CONNECT(USB_IRQ, USB_IRQ_PRI, udc_rpi_isr, 0, 0);
 	irq_enable(USB_IRQ);
@@ -375,8 +373,7 @@ int usb_dc_ep_check_cap(const struct usb_dc_ep_cfg_data *const cfg)
 {
 	uint8_t ep_idx = USB_EP_GET_IDX(cfg->ep_addr);
 
-	LOG_DBG("ep %x, mps %d, type %d",
-		cfg->ep_addr, cfg->ep_mps, cfg->ep_type);
+	LOG_DBG("ep %x, mps %d, type %d", cfg->ep_addr, cfg->ep_mps, cfg->ep_type);
 
 	if ((cfg->ep_type == USB_DC_EP_CONTROL) && ep_idx) {
 		LOG_ERR("invalid endpoint configuration");
@@ -400,8 +397,7 @@ int usb_dc_ep_configure(const struct usb_dc_ep_cfg_data *const ep_cfg)
 		return -EINVAL;
 	}
 
-	LOG_DBG("ep 0x%02x, previous mps %u, mps %u, type %u",
-		ep_cfg->ep_addr, ep_state->mps,
+	LOG_DBG("ep 0x%02x, previous mps %u, mps %u, type %u", ep_cfg->ep_addr, ep_state->mps,
 		ep_cfg->ep_mps, ep_cfg->ep_type);
 
 	ep_state->mps = ep_cfg->ep_mps;
@@ -421,8 +417,8 @@ int usb_dc_ep_set_stall(const uint8_t ep)
 	}
 	if (USB_EP_GET_IDX(ep) == 0) {
 		hw_set_alias(usb_hw)->ep_stall_arm = USB_EP_DIR_IS_OUT(ep) ?
-			USB_EP_STALL_ARM_EP0_OUT_BITS :
-			USB_EP_STALL_ARM_EP0_IN_BITS;
+							     USB_EP_STALL_ARM_EP0_OUT_BITS :
+							     USB_EP_STALL_ARM_EP0_IN_BITS;
 	}
 
 	*ep_state->buf_ctl = USB_BUF_CTRL_STALL;
@@ -493,11 +489,9 @@ int usb_dc_ep_enable(const uint8_t ep)
 
 	/* EP0 doesn't have an ep_ctl */
 	if (ep_state->ep_ctl) {
-		uint32_t val =
-			EP_CTRL_ENABLE_BITS |
-			EP_CTRL_INTERRUPT_PER_BUFFER |
-			(ep_state->type << EP_CTRL_BUFFER_TYPE_LSB) |
-			usb_dc_ep_rpi_pico_buffer_offset(ep_state->buf);
+		uint32_t val = EP_CTRL_ENABLE_BITS | EP_CTRL_INTERRUPT_PER_BUFFER |
+			       (ep_state->type << EP_CTRL_BUFFER_TYPE_LSB) |
+			       usb_dc_ep_rpi_pico_buffer_offset(ep_state->buf);
 
 		*ep_state->ep_ctl = val;
 	}
@@ -531,8 +525,8 @@ int usb_dc_ep_disable(const uint8_t ep)
 	return 0;
 }
 
-int usb_dc_ep_write(const uint8_t ep, const uint8_t *const data,
-		    const uint32_t data_len, uint32_t *const ret_bytes)
+int usb_dc_ep_write(const uint8_t ep, const uint8_t *const data, const uint32_t data_len,
+		    uint32_t *const ret_bytes)
 {
 	struct udc_rpi_ep_state *ep_state = udc_rpi_get_ep_state(ep);
 	uint32_t len = data_len;
@@ -586,8 +580,7 @@ uint32_t udc_rpi_get_ep_buffer_len(const uint8_t ep)
 	return buf_ctl & USB_BUF_CTRL_LEN_MASK;
 }
 
-int usb_dc_ep_read_wait(uint8_t ep, uint8_t *data,
-			uint32_t max_data_len, uint32_t *read_bytes)
+int usb_dc_ep_read_wait(uint8_t ep, uint8_t *data, uint32_t max_data_len, uint32_t *read_bytes)
 {
 	struct udc_rpi_ep_state *ep_state = udc_rpi_get_ep_state(ep);
 	uint32_t read_count;
@@ -642,9 +635,8 @@ int usb_dc_ep_read_continue(uint8_t ep)
 		return -EINVAL;
 	}
 
-	bytes_received = state.setup_available ?
-			 sizeof(struct usb_setup_packet) :
-			 udc_rpi_get_ep_buffer_len(ep);
+	bytes_received = state.setup_available ? sizeof(struct usb_setup_packet) :
+						 udc_rpi_get_ep_buffer_len(ep);
 
 	state.setup_available = false;
 
@@ -657,8 +649,8 @@ int usb_dc_ep_read_continue(uint8_t ep)
 	return 0;
 }
 
-int usb_dc_ep_read(const uint8_t ep, uint8_t *const data,
-		   const uint32_t max_data_len, uint32_t *const read_bytes)
+int usb_dc_ep_read(const uint8_t ep, uint8_t *const data, const uint32_t max_data_len,
+		   uint32_t *const read_bytes)
 {
 	if (usb_dc_ep_read_wait(ep, data, max_data_len, read_bytes) != 0) {
 		return -EINVAL;
