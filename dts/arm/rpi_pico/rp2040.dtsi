@@ -52,7 +52,7 @@
 			#clock-cells = <0>;
 		};
 
-		reset: reset-controller@4000c000 {
+		reset_controller: reset-controller@4000c000 {
 			compatible = "raspberrypi,pico-reset";
 			reg = <0x4000c000 DT_SIZE_K(4)>;
 			reg-width = <4>;
@@ -83,7 +83,7 @@
 			compatible = "raspberrypi,pico-uart";
 			reg = <0x40034000 DT_SIZE_K(4)>;
 			clocks = <&peripheral_clk>;
-			resets = <&reset RPI_PICO_RESETS_RESET_UART0>;
+			resets = <&reset_controller RPI_PICO_RESETS_RESET_UART0>;
 			interrupts = <20 RPI_PICO_DEFAULT_IRQ_PRIORITY>;
 			interrupt-names = "uart0";
 			label = "UART_0";
@@ -94,7 +94,7 @@
 			compatible = "raspberrypi,pico-uart";
 			reg = <0x40038000 DT_SIZE_K(4)>;
 			clocks = <&peripheral_clk>;
-			resets = <&reset RPI_PICO_RESETS_RESET_UART1>;
+			resets = <&reset_controller RPI_PICO_RESETS_RESET_UART1>;
 			interrupts = <21 RPI_PICO_DEFAULT_IRQ_PRIORITY>;
 			interrupt-names = "uart1";
 			label = "UART_1";
@@ -128,7 +128,7 @@
 		usbd: usbd@50100000 {
 			compatible = "raspberrypi,pico-usbd";
 			reg = <0x50100000 0x10000>;
-			resets = <&reset RPI_PICO_RESETS_RESET_USBCTRL>;
+			resets = <&reset_controller RPI_PICO_RESETS_RESET_USBCTRL>;
 			interrupts = <5 RPI_PICO_DEFAULT_IRQ_PRIORITY>;
 			interrupt-names = "usbctrl";
 			num-bidir-endpoints = <16>;
