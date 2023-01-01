@@ -21,6 +21,9 @@
 #include <hardware/clocks.h>
 #include <hardware/resets.h>
 
+#include <pico/bootrom.h>
+#include <arch/arm/aarch32/cortex_m/cmsis.h>
+
 #ifdef CONFIG_RUNTIME_NMI
 extern void z_arm_nmi_init(void);
 #define NMI_INIT() z_arm_nmi_init()
@@ -37,11 +40,10 @@ static int rp2040_init(const struct device *arg)
 	reset_block(~(RESETS_RESET_IO_QSPI_BITS | RESETS_RESET_PADS_QSPI_BITS |
 		      RESETS_RESET_PLL_USB_BITS | RESETS_RESET_PLL_SYS_BITS));
 
-	unreset_block_wait(RESETS_RESET_BITS &
-			   ~(RESETS_RESET_ADC_BITS | RESETS_RESET_RTC_BITS |
-			     RESETS_RESET_SPI0_BITS | RESETS_RESET_SPI1_BITS |
-			     RESETS_RESET_UART0_BITS | RESETS_RESET_UART1_BITS |
-			     RESETS_RESET_USBCTRL_BITS));
+	unreset_block_wait(RESETS_RESET_BITS & ~(RESETS_RESET_ADC_BITS | RESETS_RESET_RTC_BITS |
+						 RESETS_RESET_SPI0_BITS | RESETS_RESET_SPI1_BITS |
+						 RESETS_RESET_UART0_BITS | RESETS_RESET_UART1_BITS |
+						 RESETS_RESET_USBCTRL_BITS));
 
 	clocks_init();
 
@@ -59,6 +61,18 @@ static int rp2040_init(const struct device *arg)
 	irq_unlock(key);
 
 	return 0;
+}
+
+#define RST_UF2 0x57
+
+/* Overrides the weak ARM implementation:
+   Set general purpose retention register and reboot */
+void sys_arch_reboot(int type)
+{
+	if (type == RST_UF2) {
+		reset_usb_boot(0, 0);
+	}
+	NVIC_SystemReset();
 }
 
 SYS_INIT(rp2040_init, PRE_KERNEL_1, 0);
